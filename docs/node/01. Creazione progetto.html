@@ -1,0 +1,201 @@
+<h2 id="creare-il-packagejson">Creare il package.json</h2>
+
+<p>Per iniziare un programma in node è consigliato creare una cartella dedicata, poi spostaarsi all’interno e da terminale digitare npm init -y</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">mkdir </span>backend
+<span class="nb">cd </span>backend
+npm init <span class="nt">-y</span>
+</code></pre></div></div>
+
+<p>Aprire la cartella con un editor di testo (consigliato visial studio code)</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>code <span class="nb">.</span>
+</code></pre></div></div>
+
+<p>Ti il comando npm init -y ti creera un package.json con questa struttura</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"node"</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="nl">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1.0.0"</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="nl">"main"</span><span class="p">:</span><span class="w"> </span><span class="s2">"index.js"</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="nl">"scripts"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="err"> </span><span class="w"> </span><span class="nl">"test"</span><span class="p">:</span><span class="w"> </span><span class="s2">"echo </span><span class="se">\"</span><span class="s2">Error: no test specified</span><span class="se">\"</span><span class="s2"> &amp;&amp; exit 1"</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="p">},</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="nl">"keywords"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="nl">"author"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="nl">"license"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ISC"</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Qui è consigliato di cambiare questi campi</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+   </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"nome del progetto"</span><span class="p">,</span><span class="w">
+   </span><span class="nl">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0.0.0"</span><span class="p">,</span><span class="w">
+   </span><span class="nl">"keywords"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"api"</span><span class="p">,</span><span class="w"> </span><span class="s2">"rest api"</span><span class="p">,</span><span class="w"> </span><span class="s2">"node"</span><span class="p">],</span><span class="w">
+   </span><span class="nl">"author"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Violatto Alex"</span><span class="p">,</span><span class="w">
+   </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"La descrizione del progetto"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Il campo <code class="language-plaintext highlighter-rouge">keyword</code> è un array che serve a <strong>descrivere con <code class="language-plaintext highlighter-rouge">parole chiave</code> il tuo pacchetto</strong>. È pensato per aiutare le persone (e i motori di ricerca come npmjs.com) a trovare il tuo pacchetto in base a termini rilevanti.</p>
+
+<h4 id="usi-principali">Usi principali:</h4>
+
+<ul>
+  <li><strong>SEO su npm</strong>: migliora la visibilità del tuo pacchetto.</li>
+  <li><strong>Organizzazione</strong>: rende più chiaro a cosa serve il pacchetto.</li>
+  <li><strong>Convenzione</strong>: usato anche da strumenti automatici o repository aziendali per categorizzare.</li>
+</ul>
+
+<p>Adesso il prossimo passo è creare i file e le cartelle principali per node.</p>
+
+<h2 id="configurazione-progetto">Configurazione progetto</h2>
+
+<h4 id="inizializzazion-di-git">Inizializzazion di <code class="language-plaintext highlighter-rouge">git</code></h4>
+<p>Da terminale inizializza <code class="language-plaintext highlighter-rouge">git</code>, se non lo hai scaricato visita <a href="https://git-scm.com/downloads">questa pagina</a></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git init
+<span class="nb">touch</span> .gitignore
+</code></pre></div></div>
+
+<p>Creare un file <code class="language-plaintext highlighter-rouge">.gitignore</code> dove metti le basi per un progetto <code class="language-plaintext highlighter-rouge">node</code> che serviranno per ignorare i file da committare su github</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>node_modules
+.env
+# Questo è un commento
+</code></pre></div></div>
+
+<h6 id="i-commenti-nei-file-gitignore--si-fanno-con-">I commenti nei file <code class="language-plaintext highlighter-rouge">.gitignore</code>  si fanno con <code class="language-plaintext highlighter-rouge">#</code></h6>
+
+<h4 id="inizializzazione-di-prettier">Inizializzazione di <code class="language-plaintext highlighter-rouge">prettier</code></h4>
+
+<p>è fortemente consigliato usare un code formatter, consiglio <code class="language-plaintext highlighter-rouge">prettier</code> installabile o tramite estensione <code class="language-plaintext highlighter-rouge">visual studio code</code> oppure tramite <code class="language-plaintext highlighter-rouge">pacchetto npm</code>. Per scoprire tutti i settaggi di prettier puoi provarlo online <a href="https://prettier.io/playground/">qui</a></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm <span class="nb">install</span> <span class="nt">--save-dev</span> <span class="nt">--save-exact</span> prettier
+</code></pre></div></div>
+
+<p>Iniziamo a vedere i primi flag di npm, vediamo cosa fanno:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">--save-dev</code> (o <code class="language-plaintext highlighter-rouge">-D</code>) serve per installare un pacchetto npm nelle <code class="language-plaintext highlighter-rouge">dev dependency</code>, ovvero le dipendenze che servono solo allo sviluppo.</li>
+  <li>Il flag <code class="language-plaintext highlighter-rouge">--save-exact</code> (o <code class="language-plaintext highlighter-rouge">-E</code>) usato con <code class="language-plaintext highlighter-rouge">npm install</code> serve a <strong>installare una dipendenza con una versione esatta</strong>, senza l’uso di prefissi come <code class="language-plaintext highlighter-rouge">^</code> (caret) o <code class="language-plaintext highlighter-rouge">~</code> (tilde) nel file <code class="language-plaintext highlighter-rouge">package.json</code>.</li>
+</ul>
+
+<p><strong>Creare file configurazione prettier</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">touch</span> .prettierrc
+</code></pre></div></div>
+
+<p><strong>Configurazione base di <code class="language-plaintext highlighter-rouge">prettier</code></strong></p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"bracketSameLine"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"singleQuote"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"tabWidth"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"trailingComma"</span><span class="p">:</span><span class="w"> </span><span class="s2">"none"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"printWidth"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p><strong>Comandi utili per <code class="language-plaintext highlighter-rouge">prettier (npm)</code></strong>
+Questo comando scansiona tutti i file che Prettier supporta e li formatta. <code class="language-plaintext highlighter-rouge">-w</code> o <code class="language-plaintext highlighter-rouge">--write</code> sovrascrive i file in-place.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npx prettier <span class="nb">.</span> <span class="nt">--write</span>
+</code></pre></div></div>
+
+<p>Per un singolo file:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npx prettier <span class="nt">--write</span> path/to/your/file
+</code></pre></div></div>
+
+<p>Per tutti i file JavaScript in una cartella (usando un “glob pattern”):</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npx prettier <span class="nt">--write</span> <span class="s2">"src/**/*.js"</span>
+</code></pre></div></div>
+
+<p>Per più tipi di file:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npx prettier <span class="nt">--write</span> <span class="s2">"src/**/*.{js,jsx,ts,tsx,json,css}"</span>
+</code></pre></div></div>
+
+<p>Questo comando è utile per i CI/CD pipeline per assicurarsi che il codice sia formattato prima di essere committato.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npx prettier <span class="nb">.</span> <span class="nt">--check</span>
+</code></pre></div></div>
+
+<h5 id="aggiunta-di-script-a-packagejson-consigliato">Aggiunta di script a <code class="language-plaintext highlighter-rouge">package.json</code> (consigliato)</h5>
+
+<p>Per rendere più facile l’esecuzione di Prettier, puoi aggiungere degli script al tuo file <code class="language-plaintext highlighter-rouge">package.json</code>:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"scripts"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"prettier . --write"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"check-format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"prettier . --check"</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Una volta aggiunti, puoi eseguire questi comandi più facilmente:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm run format
+npm run check-format
+</code></pre></div></div>
+
+<h4 id="setup-environment-env">Setup environment <code class="language-plaintext highlighter-rouge">.env</code></h4>
+
+<p>Per questo passaggio bisogna creare 2 file: <code class="language-plaintext highlighter-rouge">.env</code> e <code class="language-plaintext highlighter-rouge">.env.example</code>. Il primo è quello dove andrai a salvare <code class="language-plaintext highlighter-rouge">valori sensibili</code> come <code class="language-plaintext highlighter-rouge">api key</code>, <code class="language-plaintext highlighter-rouge">token</code>, <code class="language-plaintext highlighter-rouge">connection string</code> e altri valori da non condividere</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">touch</span> .env
+<span class="nb">touch</span> .env.example
+</code></pre></div></div>
+
+<p>Ricordati di aggiornare sempre anche il file <code class="language-plaintext highlighter-rouge">.env.example</code> oltre che il <code class="language-plaintext highlighter-rouge">.env</code>, se no chi clona il progetto non sa che valori deve inserire. Devi aggiornarlo seguendo questa logica</p>
+
+<p><strong>.env</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PASSWORD_SEGRETA=QdFwSzDsWcSf0!
+</code></pre></div></div>
+
+<p><strong>.env.example</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PASSWORD_SEGRETA=Imposta_qui_la_tua_password
+</code></pre></div></div>
+
+<h4 id="installazione-altri-pacchetti-e-configurazione-tsconfig">Installazione altri pacchetti e configurazione tsconfig</h4>
+
+<p>Per finire la configurazione iniziale è consigliato installare pacchetti come <code class="language-plaintext highlighter-rouge">ts-node</code>, <code class="language-plaintext highlighter-rouge">typescript</code> e <code class="language-plaintext highlighter-rouge">types/node</code> in dev dependency</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm <span class="nb">install</span> <span class="nt">--save-dev</span> typescript ts-node @types/node
+</code></pre></div></div>
+
+<h5 id="creazione-tsconfig">Creazione tsconfig</h5>
+
+<p>Inizializza typescript con il seguente comando</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npx tsc <span class="nt">--init</span>
+</code></pre></div></div>
+
+<p>Dopo aver lanciato il comando verrà creato un <code class="language-plaintext highlighter-rouge">tsconfig.json</code> con commentate tutte le righe sui valori e su cosa fanno, io consiglio questa struttura</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="nl">"compilerOptions"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="err"> </span><span class="w"> </span><span class="nl">"target"</span><span class="p">:</span><span class="w"> </span><span class="s2">"es2016"</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="err"> </span><span class="w"> </span><span class="nl">"module"</span><span class="p">:</span><span class="w"> </span><span class="s2">"commonjs"</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="err"> </span><span class="w"> </span><span class="nl">"outDir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"dist"</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="err"> </span><span class="w"> </span><span class="nl">"esModuleInterop"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="err"> </span><span class="w"> </span><span class="nl">"forceConsistentCasingInFileNames"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="err"> </span><span class="w"> </span><span class="nl">"strict"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="err"> </span><span class="w"> </span><span class="nl">"skipLibCheck"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="err"> </span><span class="w"> </span><span class="nl">"noImplicitAny"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="err"> </span><span class="w"> </span><span class="nl">"resolveJsonModule"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="err"> </span><span class="w"> </span><span class="nl">"strictPropertyInitialization"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="err"> </span><span class="w"> </span><span class="nl">"experimentalDecorators"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="err"> </span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Adess iniziamo a creare la cartella <code class="language-plaintext highlighter-rouge">src</code> e i file <code class="language-plaintext highlighter-rouge">index.ts</code> e <code class="language-plaintext highlighter-rouge">app.ts</code></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">mkdir </span>src
+<span class="nb">touch </span>src/index.ts
+<span class="nb">touch </span>src/app.ts
+</code></pre></div></div>

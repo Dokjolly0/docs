@@ -1,0 +1,298 @@
+<p>Per iniziare la parte di gestione errori bisogna installare <code class="language-plaintext highlighter-rouge">express</code> e i suoi <code class="language-plaintext highlighter-rouge">tipi</code></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm <span class="nb">install </span>express class-validator
+npm <span class="nb">install</span> <span class="nt">--save-dev</span> @types/express
+</code></pre></div></div>
+
+<p>Adesso partiamo creando gli errori</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">mkdir </span>src/errors
+<span class="nb">touch </span>src/errors/internal-server-error.ts
+<span class="nb">touch </span>src/errors/not-found.ts
+<span class="nb">touch </span>src/errors/dotenv.ts
+<span class="nb">touch </span>src/errors/custom.ts
+<span class="nb">touch </span>src/errors/unouthorized.ts
+<span class="nb">touch </span>src/errors/validation.ts
+<span class="nb">touch </span>src/errors/user-exist.ts
+<span class="nb">touch </span>src/errors/index.ts
+</code></pre></div></div>
+
+<p>Adesso che abbiamo una buona base, iniziamo con il capire come funziona tutta la parte della gestione errori, iniziamo con il creare il classicissimo errore 404 (not found)</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">Request</span><span class="p">,</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">NextFunction</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">class</span> <span class="nc">NotFoundError</span> <span class="kd">extends</span> <span class="nc">Error</span> <span class="p">{</span>
+<span class="err"> </span> <span class="nf">constructor</span><span class="p">(</span><span class="nx">entity</span><span class="p">?:</span> <span class="kr">string</span><span class="p">)</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="k">super</span><span class="p">(</span><span class="s2">`Entity </span><span class="p">${</span><span class="nx">entity</span><span class="p">}</span><span class="s2"> not found`</span><span class="p">);</span>
+<span class="err"> </span> <span class="err"> </span> <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">NotFoundError</span><span class="dl">"</span><span class="p">;</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nb">Object</span><span class="p">.</span><span class="nf">setPrototypeOf</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">NotFoundError</span><span class="p">.</span><span class="nx">prototype</span><span class="p">);</span>
+<span class="err"> </span> <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">notFoundHandler</span> <span class="o">=</span> <span class="p">(</span><span class="nx">err</span><span class="p">:</span> <span class="nb">Error</span><span class="p">,</span> <span class="nx">req</span><span class="p">:</span> <span class="nx">Request</span><span class="p">,</span> <span class="nx">res</span><span class="p">:</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">next</span><span class="p">:</span> <span class="nx">NextFunction</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+<span class="err"> </span> <span class="k">if </span><span class="p">(</span><span class="nx">err</span> <span class="k">instanceof</span> <span class="nx">NotFoundError</span><span class="p">)</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nx">res</span><span class="p">.</span><span class="nf">status</span><span class="p">(</span><span class="mi">404</span><span class="p">).</span><span class="nf">json</span><span class="p">({</span>
+<span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="na">error</span><span class="p">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>
+<span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="na">message</span><span class="p">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">message</span>
+<span class="err"> </span> <span class="err"> </span> <span class="p">});</span>
+<span class="err"> </span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nf">next</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+<span class="err"> </span> <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>Dopo aver creato questo file bisogna inserirlo nel file <code class="language-plaintext highlighter-rouge">index.ts</code> (quello degli errori che abbiamo appena creato)</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">notFoundHandler</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./not-found</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">errorHandlers</span> <span class="o">=</span> <span class="p">[</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nx">notFoundHandler</span>
+<span class="p">]</span>
+</code></pre></div></div>
+
+<h5 id="capiamo-il-funzionamento-dei-file-appena-creati">Capiamo il funzionamento dei file appena creati</h5>
+
+<p>Adesso capiamo come funziona e soprattutto perché funziona. Nel file <code class="language-plaintext highlighter-rouge">not-found.ts</code> abbiamo esportato 2 elementi: una <code class="language-plaintext highlighter-rouge">constante</code> e una <code class="language-plaintext highlighter-rouge">classe</code>, la classe è quella che andrai a richiamare dovunque ti serva richiamare questo specifico errore, ad esempio così</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">throw</span> <span class="k">new</span> <span class="nc">NotFoundError</span><span class="p">(</span><span class="nx">entity</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>Cosa fa <code class="language-plaintext highlighter-rouge">super()</code>? La parola chiave <code class="language-plaintext highlighter-rouge">super()</code> in TypeScript (e JavaScript) viene usata per <strong>chiamare il costruttore della classe padre</strong>, ovvero la classe da cui stai estendendo.</p>
+
+<h5 id="effetto">Effetto:</h5>
+<ul>
+  <li>Imposta il messaggio dell’errore (<code class="language-plaintext highlighter-rouge">err.message</code>)</li>
+  <li>Permette al motore JavaScript/TypeScript di gestire lo stack trace correttamente</li>
+  <li>Ti consente di accedere a metodi/attributi di <code class="language-plaintext highlighter-rouge">Error</code></li>
+</ul>
+
+<h5 id="quindi-questa-riga">Quindi questa riga:</h5>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">super</span><span class="p">(</span><span class="s2">`Entity </span><span class="p">${</span><span class="nx">entity</span><span class="p">}</span><span class="s2"> not found`</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>Equivale a scrivere la riga qui sotto ma all’interno della tua sottoclasse personalizzata. :</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">error</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Error</span><span class="p">(</span><span class="s2">`Entity </span><span class="p">${</span><span class="nx">entity</span><span class="p">}</span><span class="s2"> not found`</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>Quando estendi <code class="language-plaintext highlighter-rouge">Error</code>, è buona pratica anche aggiungere:</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">Object</span><span class="p">.</span><span class="nf">setPrototypeOf</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">NotFoundError</span><span class="p">.</span><span class="nx">prototype</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>Per garantire che <code class="language-plaintext highlighter-rouge">instanceof</code> funzioni correttamente, specialmente in ambienti JavaScript transpiled (come quando usi <code class="language-plaintext highlighter-rouge">tsc</code>). questo garantisce che funzioni correttamente quando chiami l’instanza ad esempio quando in un controller controlli di che tipo è l’errore, se entra nel blocco else <code class="language-plaintext highlighter-rouge">next()</code> si occupa di scorrere tutti gli errori dentro <code class="language-plaintext highlighter-rouge">index.ts</code> che poi collegheremo in <code class="language-plaintext highlighter-rouge">app.ts</code> e controlla tutte le istanze fino a trovare quella corretta, quindi in <code class="language-plaintext highlighter-rouge">errorHandlers</code> gli errori vanno messi a livello di importanza dal più restrittivo al più generico. il più generico di solito è <code class="language-plaintext highlighter-rouge">internal server error</code> con status code <code class="language-plaintext highlighter-rouge">500</code> che indica che l’errore generato non è stato gestito da nessun <code class="language-plaintext highlighter-rouge">middleware</code>. In quel caso bisogna trovare dove viene generato l’errore e tipizzarlo.</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span><span class="p">(</span><span class="nx">err</span> <span class="k">instanceof</span> <span class="nx">NotFoundError</span><span class="p">)</span> <span class="p">{</span><span class="cm">/*Fai qualcosa*/</span><span class="p">}</span> 
+</code></pre></div></div>
+
+<p>Adesso che abbiamo capito a cosa serve la classe vediamo a cosa serve la costante <code class="language-plaintext highlighter-rouge">notFoundHandler</code>, semplicemente si occupa di catturare tutti gli errori di tipo <code class="language-plaintext highlighter-rouge">NotFoundError</code> e impostare l’errore con il <code class="language-plaintext highlighter-rouge">name</code> e il <code class="language-plaintext highlighter-rouge">message</code> che abbiamo nel <code class="language-plaintext highlighter-rouge">constructor</code>, ricordiamo che <code class="language-plaintext highlighter-rouge">message</code> non lo dichiariamo direttamente ma lo fa <code class="language-plaintext highlighter-rouge">super()</code> dietro le quinte. Adesso che abbiamo capito come funziona tutta la logica di gestione degli errori (<code class="language-plaintext highlighter-rouge">middleware</code>) creiamo tutti gli errori che ci servono.</p>
+
+<h4 id="errori-di-base">Errori di base</h4>
+
+<h5 id="unouthorized-error"><code class="language-plaintext highlighter-rouge">Unouthorized error</code></h5>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">Request</span><span class="p">,</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">NextFunction</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">class</span> <span class="nc">UnauthorizedError</span> <span class="kd">extends</span> <span class="nc">Error</span> <span class="p">{</span>
+<span class="err"> </span> <span class="nf">constructor</span><span class="p">(</span><span class="nx">message</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">User not authorized</span><span class="dl">"</span><span class="p">)</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="k">super</span><span class="p">(</span><span class="nx">message</span><span class="p">);</span>
+<span class="err"> </span> <span class="err"> </span> <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">UnauthorizedError</span><span class="dl">"</span><span class="p">;</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nb">Object</span><span class="p">.</span><span class="nf">setPrototypeOf</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">UnauthorizedError</span><span class="p">.</span><span class="nx">prototype</span><span class="p">);</span>
+<span class="err"> </span> <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">unauthorizedHandler</span> <span class="o">=</span> <span class="p">(</span>
+<span class="err"> </span> <span class="nx">err</span><span class="p">:</span> <span class="nb">Error</span><span class="p">,</span>
+<span class="err"> </span> <span class="nx">req</span><span class="p">:</span> <span class="nx">Request</span><span class="p">,</span>
+<span class="err"> </span> <span class="nx">res</span><span class="p">:</span> <span class="nx">Response</span><span class="p">,</span>
+<span class="err"> </span> <span class="nx">next</span><span class="p">:</span> <span class="nx">NextFunction</span>
+<span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+<span class="err"> </span> <span class="k">if </span><span class="p">(</span><span class="nx">err</span> <span class="k">instanceof</span> <span class="nx">UnauthorizedError</span><span class="p">)</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nx">res</span><span class="p">.</span><span class="nf">status</span><span class="p">(</span><span class="mi">401</span><span class="p">).</span><span class="nf">json</span><span class="p">({</span>
+<span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="na">error</span><span class="p">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>
+<span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="na">message</span><span class="p">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">message</span>
+<span class="err"> </span> <span class="err"> </span> <span class="p">});</span>
+<span class="err"> </span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nf">next</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+<span class="err"> </span> <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<h5 id="dotenv-error"><code class="language-plaintext highlighter-rouge">Dotenv error</code></h5>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">Request</span><span class="p">,</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">NextFunction</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">class</span> <span class="nc">DotEnvError</span> <span class="kd">extends</span> <span class="nc">Error</span> <span class="p">{</span>
+<span class="err"> </span> <span class="nf">constructor</span><span class="p">(</span><span class="nx">entity</span><span class="p">?:</span> <span class="kr">string</span><span class="p">)</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="k">super</span><span class="p">(</span><span class="s2">`Entity </span><span class="p">${</span><span class="nx">entity</span><span class="p">}</span><span class="s2"> not found in dotenv`</span><span class="p">);</span>
+<span class="err"> </span> <span class="err"> </span> <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">DotEnvError</span><span class="dl">"</span><span class="p">;</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nb">Object</span><span class="p">.</span><span class="nf">setPrototypeOf</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">DotEnvError</span><span class="p">.</span><span class="nx">prototype</span><span class="p">);</span>
+<span class="err"> </span> <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">dotenvHandler</span> <span class="o">=</span> <span class="p">(</span><span class="nx">err</span><span class="p">:</span> <span class="nb">Error</span><span class="p">,</span> <span class="nx">req</span><span class="p">:</span> <span class="nx">Request</span><span class="p">,</span> <span class="nx">res</span><span class="p">:</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">next</span><span class="p">:</span> <span class="nx">NextFunction</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+<span class="err"> </span> <span class="k">if </span><span class="p">(</span><span class="nx">err</span> <span class="k">instanceof</span> <span class="nx">DotEnvError</span><span class="p">)</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nx">res</span><span class="p">.</span><span class="nf">status</span><span class="p">(</span><span class="mi">404</span><span class="p">).</span><span class="nf">json</span><span class="p">({</span>
+<span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="na">error</span><span class="p">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>
+<span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="na">message</span><span class="p">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">message</span>
+<span class="err"> </span> <span class="err"> </span> <span class="p">});</span>
+<span class="err"> </span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nf">next</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+<span class="err"> </span> <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<h5 id="custom-error"><code class="language-plaintext highlighter-rouge">Custom error</code></h5>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">Request</span><span class="p">,</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">NextFunction</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">class</span> <span class="nc">CustomError</span> <span class="kd">extends</span> <span class="nc">Error</span> <span class="p">{</span>
+<span class="err"> </span> <span class="nx">statusCode</span><span class="p">:</span> <span class="kr">number</span><span class="p">;</span>
+<span class="err"> </span> <span class="nf">constructor</span><span class="p">(</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nx">name</span><span class="p">:</span> <span class="kr">string</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">CustomError</span><span class="dl">"</span><span class="p">,</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nx">message</span><span class="p">:</span> <span class="kr">string</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">Custom error message</span><span class="dl">"</span><span class="p">,</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nx">statusCode</span><span class="p">:</span> <span class="kr">number</span> <span class="o">=</span> <span class="mi">400</span>
+<span class="err"> </span> <span class="p">)</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="k">if </span><span class="p">(</span><span class="o">!</span><span class="nb">Number</span><span class="p">.</span><span class="nf">isInteger</span><span class="p">(</span><span class="nx">statusCode</span><span class="p">)</span> <span class="o">||</span> <span class="nx">statusCode</span> <span class="o">&lt;</span> <span class="mi">100</span> <span class="o">||</span> <span class="nx">statusCode</span> <span class="o">&gt;</span> <span class="mi">599</span><span class="p">)</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="k">throw</span> <span class="k">new</span> <span class="nc">RangeError</span><span class="p">(</span>
+<span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="s2">`Invalid HTTP status code: </span><span class="p">${</span><span class="nx">statusCode</span><span class="p">}</span><span class="s2">. It must be an integer between 100 and 599.`</span>
+<span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="p">);</span>
+<span class="err"> </span> <span class="err"> </span> <span class="p">}</span>
+  
+<span class="err"> </span> <span class="err"> </span> <span class="k">super</span><span class="p">(</span><span class="nx">message</span><span class="p">);</span>
+<span class="err"> </span> <span class="err"> </span> <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">name</span><span class="p">;</span>
+<span class="err"> </span> <span class="err"> </span> <span class="k">this</span><span class="p">.</span><span class="nx">statusCode</span> <span class="o">=</span> <span class="nx">statusCode</span><span class="p">;</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nb">Object</span><span class="p">.</span><span class="nf">setPrototypeOf</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">CustomError</span><span class="p">.</span><span class="nx">prototype</span><span class="p">);</span>
+<span class="err"> </span> <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">customHandler</span> <span class="o">=</span> <span class="p">(</span><span class="nx">err</span><span class="p">:</span> <span class="nb">Error</span><span class="p">,</span> <span class="nx">req</span><span class="p">:</span> <span class="nx">Request</span><span class="p">,</span> <span class="nx">res</span><span class="p">:</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">next</span><span class="p">:</span> <span class="nx">NextFunction</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+<span class="err"> </span> <span class="k">if </span><span class="p">(</span><span class="nx">err</span> <span class="k">instanceof</span> <span class="nx">CustomError</span><span class="p">)</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nx">res</span><span class="p">.</span><span class="nf">status</span><span class="p">(</span><span class="nx">err</span><span class="p">.</span><span class="nx">statusCode</span><span class="p">).</span><span class="nf">json</span><span class="p">({</span>
+<span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="na">error</span><span class="p">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>
+<span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="na">message</span><span class="p">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">message</span>
+<span class="err"> </span> <span class="err"> </span> <span class="p">});</span>
+<span class="err"> </span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nf">next</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+<span class="err"> </span> <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<h5 id="attenzione">Attenzione!</h5>
+
+<p>Per quanto riguarda il <code class="language-plaintext highlighter-rouge">custom error</code> è importante chiarire che DEVE essere usato solo per messaggi poco importanti, perché se te vai a controllare l’instanza dell’errore non ci trovi l’istanza dell’errore che vuoi scatenare ma una generica.</p>
+
+<h5 id="internal-server-error"><code class="language-plaintext highlighter-rouge">Internal server error</code></h5>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">Request</span><span class="p">,</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">NextFunction</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">internalServerErrorHandler</span> <span class="o">=</span> <span class="p">(</span>
+<span class="err"> </span> <span class="nx">err</span><span class="p">:</span> <span class="nb">Error</span><span class="p">,</span>
+<span class="err"> </span> <span class="nx">req</span><span class="p">:</span> <span class="nx">Request</span><span class="p">,</span>
+<span class="err"> </span> <span class="nx">res</span><span class="p">:</span> <span class="nx">Response</span><span class="p">,</span>
+<span class="err"> </span> <span class="nx">next</span><span class="p">:</span> <span class="nx">NextFunction</span>
+<span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+<span class="err"> </span> <span class="nx">console</span><span class="p">.</span><span class="nf">error</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+<span class="err"> </span> <span class="nx">res</span><span class="p">.</span><span class="nf">status</span><span class="p">(</span><span class="mi">500</span><span class="p">).</span><span class="nf">json</span><span class="p">({</span>
+<span class="err"> </span> <span class="err"> </span> <span class="na">error</span><span class="p">:</span> <span class="dl">"</span><span class="s2">InternalServerError</span><span class="dl">"</span><span class="p">,</span>
+<span class="err"> </span> <span class="err"> </span> <span class="na">message</span><span class="p">:</span> <span class="dl">"</span><span class="s2">The server encountered an internal error. Err: </span><span class="dl">"</span> <span class="o">+</span> <span class="nx">err</span><span class="p">.</span><span class="nx">message</span>
+<span class="err"> </span> <span class="p">});</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>Errore che viene richiamato dopo aver controllato tutti gli altri <code class="language-plaintext highlighter-rouge">middleware</code> come detto prima</p>
+
+<h5 id="user-exist-error"><code class="language-plaintext highlighter-rouge">User exist error</code></h5>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">Request</span><span class="p">,</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">NextFunction</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">class</span> <span class="nc">UserExistsError</span> <span class="kd">extends</span> <span class="nc">Error</span> <span class="p">{</span>
+<span class="err"> </span> <span class="nf">constructor</span><span class="p">(</span><span class="nx">username</span><span class="p">:</span> <span class="kr">string</span><span class="p">)</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="k">super</span><span class="p">(</span><span class="s2">`username </span><span class="p">${</span><span class="nx">username</span><span class="p">}</span><span class="s2"> already in use`</span><span class="p">);</span>
+<span class="err"> </span> <span class="err"> </span> <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">UserExists</span><span class="dl">"</span><span class="p">;</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nb">Object</span><span class="p">.</span><span class="nf">setPrototypeOf</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">UserExistsError</span><span class="p">.</span><span class="nx">prototype</span><span class="p">);</span>
+<span class="err"> </span> <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">userExistHandler</span> <span class="o">=</span> <span class="p">(</span><span class="nx">err</span><span class="p">:</span> <span class="nb">Error</span><span class="p">,</span> <span class="nx">req</span><span class="p">:</span> <span class="nx">Request</span><span class="p">,</span> <span class="nx">res</span><span class="p">:</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">next</span><span class="p">:</span> <span class="nx">NextFunction</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+<span class="err"> </span> <span class="k">if </span><span class="p">(</span><span class="nx">err</span> <span class="k">instanceof</span> <span class="nx">UserExistsError</span><span class="p">)</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nx">res</span><span class="p">.</span><span class="nf">status</span><span class="p">(</span><span class="mi">409</span><span class="p">).</span><span class="nf">json</span><span class="p">({</span>
+<span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="na">error</span><span class="p">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>
+<span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="na">message</span><span class="p">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">message</span>
+<span class="err"> </span> <span class="err"> </span> <span class="p">});</span>
+<span class="err"> </span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+<span class="err"> </span> <span class="err"> </span> <span class="nf">next</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+<span class="err"> </span> <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<h5 id="validation-error"><code class="language-plaintext highlighter-rouge">Validation error</code></h5>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">NextFunction</span><span class="p">,</span> <span class="nx">Request</span><span class="p">,</span> <span class="nx">Response</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">ValidationError</span> <span class="kd">as </span><span class="nx">OriginalValidationError</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">class-validator</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">class</span> <span class="nc">ValidationError</span> <span class="kd">extends</span> <span class="nc">Error</span> <span class="p">{</span>
+  <span class="nl">originalErrors</span><span class="p">:</span> <span class="nx">OriginalValidationError</span><span class="p">[];</span>
+
+  <span class="nf">constructor</span><span class="p">(</span><span class="nx">errors</span><span class="p">:</span> <span class="nx">OriginalValidationError</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="kd">const</span> <span class="nx">message</span> <span class="o">=</span> <span class="nx">errors</span><span class="p">.</span><span class="nf">map</span><span class="p">((</span><span class="nx">err</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nb">Object</span><span class="p">.</span><span class="nf">values</span><span class="p">(</span><span class="nx">err</span><span class="p">.</span><span class="nx">constraints</span> <span class="o">??</span> <span class="p">{}).</span><span class="nf">join</span><span class="p">(</span><span class="dl">"</span><span class="s2">, </span><span class="dl">"</span><span class="p">)).</span><span class="nf">join</span><span class="p">(</span><span class="dl">"</span><span class="s2">; </span><span class="dl">"</span><span class="p">);</span>
+
+    <span class="k">super</span><span class="p">(</span><span class="nx">message</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">originalErrors</span> <span class="o">=</span> <span class="nx">errors</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">ValidationError</span><span class="dl">"</span><span class="p">;</span>
+    <span class="nb">Object</span><span class="p">.</span><span class="nf">setPrototypeOf</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">ValidationError</span><span class="p">.</span><span class="nx">prototype</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">validationErrorHandler</span> <span class="o">=</span> <span class="k">async </span><span class="p">(</span>
+  <span class="nx">err</span><span class="p">:</span> <span class="nb">Error</span><span class="p">,</span>
+  <span class="nx">req</span><span class="p">:</span> <span class="nx">Request</span><span class="p">,</span>
+  <span class="nx">res</span><span class="p">:</span> <span class="nx">Response</span><span class="p">,</span>
+  <span class="nx">next</span><span class="p">:</span> <span class="nx">NextFunction</span>
+<span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="k">if </span><span class="p">(</span><span class="nx">err</span> <span class="k">instanceof</span> <span class="nx">ValidationError</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">res</span><span class="p">.</span><span class="nf">status</span><span class="p">(</span><span class="mi">400</span><span class="p">).</span><span class="nf">json</span><span class="p">({</span>
+      <span class="na">error</span><span class="p">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>
+      <span class="na">message</span><span class="p">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">message</span><span class="p">,</span>
+      <span class="na">details</span><span class="p">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">originalErrors</span><span class="p">.</span><span class="nf">map</span><span class="p">((</span><span class="nx">e</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">({</span>
+        <span class="na">property</span><span class="p">:</span> <span class="nx">e</span><span class="p">.</span><span class="nx">property</span><span class="p">,</span>
+        <span class="na">constraints</span><span class="p">:</span> <span class="nx">e</span><span class="p">.</span><span class="nx">constraints</span><span class="p">,</span>
+        <span class="na">value</span><span class="p">:</span> <span class="nx">e</span><span class="p">.</span><span class="nx">value</span>
+      <span class="p">}))</span>
+    <span class="p">});</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="nf">next</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<h6 id="menzione-speciale-per-validationerror">Menzione speciale per <code class="language-plaintext highlighter-rouge">ValidationError</code></h6>
+
+<p><code class="language-plaintext highlighter-rouge">ValidationError</code> è un <code class="language-plaintext highlighter-rouge">middleware</code>  dedicato per gestire gli errori di <code class="language-plaintext highlighter-rouge">class-validator</code> che metteremo nei <code class="language-plaintext highlighter-rouge">dto</code>.  Questa sezione del codice la vedremo più avanti, ma intanto è importante capire come vengono gestiti gli errori di <code class="language-plaintext highlighter-rouge">class-validator</code> e formattarli al meglio.</p>
+
+<h5 id="adesso-che-abbiamo-creato-tutti-gli-errori-mettiamoli-nel-file-indexts">Adesso che abbiamo creato tutti gli errori mettiamoli nel file <code class="language-plaintext highlighter-rouge">index.ts</code></h5>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">customErrorHandler</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./custom</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">dotenvErrorHandler</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./dotenv</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">internalServerErrorHandler</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./internal-server-error</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">notFoundErrorHandler</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./not-found</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">unauthorizedErrorHandler</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./unauthorized</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">userExistErrorHandler</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./user-exist</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">validationErrorHandler</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./validation</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="cm">/* Gli errori vanno messi in ordine di importanza dal piu restrittivo al piu generico */</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">errorHandlers</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="nx">customErrorHandler</span><span class="p">,</span>
+  <span class="nx">validationErrorHandler</span><span class="p">,</span>
+  <span class="nx">notFoundErrorHandler</span><span class="p">,</span>
+  <span class="nx">dotenvErrorHandler</span><span class="p">,</span>
+  <span class="nx">unauthorizedErrorHandler</span><span class="p">,</span>
+  <span class="nx">userExistErrorHandler</span><span class="p">,</span>
+
+  <span class="c1">// Internal server error</span>
+  <span class="nx">internalServerErrorHandler</span>
+<span class="p">];</span>
+</code></pre></div></div>
+
