@@ -155,8 +155,15 @@
       "command-palette:Apri riquadro comandi": false
     }
   },
-  "active": "6ef36402ec5eb438",
+  "active": "66bc9bb66669c98a",
   "lastOpenFiles": [
+    "docs/index.md",
+    "docs/_config.yml",
+    "docs/node/02. Inizio progetto - errors.md",
+    "docs/node/01. Creazione progetto.md",
+    "docs/node/00. index.md",
+    "docs/node",
+    "docs",
     "Nuova cartella",
     "node/01. Creazione progetto.md",
     "node/00. index.md",
