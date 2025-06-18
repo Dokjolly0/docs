@@ -18,14 +18,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd docs
           gem install bundler
           bundle install
 
       - name: Build site
-        run: |
-          cd docs
-          bundle exec jekyll build --source . --destination ../_site
+        run: bundle exec jekyll build --source . --destination _site
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
