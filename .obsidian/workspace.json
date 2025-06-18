@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/node/00. index.md",
+                "file": "docs/node/index.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "00. index"
+              "title": "index"
             }
           }
         ]
@@ -93,7 +93,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/node/00. index.md",
+                "file": "docs/node/index.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -103,7 +103,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Riferimenti a 00. index"
+              "title": "Riferimenti a index"
             }
           },
           {
@@ -112,12 +112,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/node/00. index.md",
+                "file": "docs/node/index.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Collegamenti in uscita da 00. index"
+              "title": "Collegamenti in uscita da index"
             }
           },
           {
@@ -139,10 +139,10 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/node/00. index.md"
+                "file": "docs/node/index.md"
               },
               "icon": "lucide-list",
-              "title": "Struttura di 00. index"
+              "title": "Struttura di index"
             }
           }
         ],
@@ -166,7 +166,7 @@
   "active": "6ef36402ec5eb438",
   "lastOpenFiles": [
     "docs/index.md",
-    "docs/node/00. index.md",
+    "docs/node/index.md",
     "docs/_config.yml",
     "docs/node/02. Inizio progetto - errors.md",
     "docs/node/01. Creazione progetto.md",

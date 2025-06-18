@@ -11,4 +11,4 @@ title: Appunti Dev
 
 ## Sezioni
 
-- [Node.js](node/00.%20index.md)
+- [Node.js](node/index.md)
