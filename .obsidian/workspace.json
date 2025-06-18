@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/node/index.md",
+                "file": "docs/index.md",
                 "mode": "source",
                 "source": false
               },
@@ -93,7 +93,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/node/index.md",
+                "file": "docs/index.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -112,7 +112,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/node/index.md",
+                "file": "docs/index.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -139,7 +139,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/node/index.md"
+                "file": "docs/index.md"
               },
               "icon": "lucide-list",
               "title": "Struttura di index"
@@ -165,11 +165,11 @@
   },
   "active": "6ef36402ec5eb438",
   "lastOpenFiles": [
-    "docs/index.md",
     "docs/node/index.md",
-    "docs/_config.yml",
+    "docs/index.md",
     "docs/node/02. Inizio progetto - errors.md",
     "docs/node/01. Creazione progetto.md",
+    "docs/_config.yml",
     "docs/node",
     "docs",
     "Nuova cartella",
