@@ -1,0 +1,759 @@
+<p>Pacchetti necessari per questa sezione</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm <span class="nb">install </span>passport passport-jwt bcrypt passport-local mongoose class-transformer
+npm <span class="nb">install</span> <span class="nt">--save-dev</span> @types/passport @types/passport-jwt @types/passport-local @types/bcrypt
+</code></pre></div></div>
+
+<p>Questa sezione è dedicata per i file che verranno richiamati da tutti i file del progetto, quindi prima creiamo la cartella <code class="language-plaintext highlighter-rouge">utils</code> e i vari file</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">mkdir </span>src/utils/enums
+<span class="nb">mkdir </span>src/utils/types
+<span class="nb">mkdir </span>src/utils/auth/jwt
+<span class="nb">mkdir </span>src/utils/auth/local
+<span class="nb">mkdir </span>src/utils/auth/providers
+<span class="nb">mkdir </span>src/utils/auth/user-identity
+
+<span class="c"># GitKeep</span>
+<span class="nb">touch </span>src/utils/auth/providers/.gitkeep
+
+<span class="c"># Enum e type user</span>
+<span class="nb">touch </span>src/utils/enums/user.enum.ts
+<span class="nb">touch </span>src/utils/types/user.type.ts
+
+<span class="c"># Creato per definire la stategia jwt</span>
+<span class="nb">mkdir </span>src/api/user
+<span class="nb">touch </span>src/api/user/user.entity.ts
+
+<span class="nb">touch </span>src/utils/greater-than.validator.ts
+<span class="nb">touch </span>src/utils/is-populated-obj.ts
+<span class="nb">touch </span>src/utils/typed-request.ts
+<span class="nb">touch </span>src/utils/validation-middleware.ts
+<span class="nb">touch </span>src/utils/dotenv.ts
+<span class="nb">touch </span>src/utils/email.template.ts
+
+<span class="nb">touch </span>src/utils/auth/jwt/jwt-strategy.ts
+
+<span class="nb">touch </span>src/utils/auth/local/local-strategy.ts
+
+<span class="nb">touch </span>src/utils/auth/user-identity/user-identity.entity.ts
+<span class="nb">touch </span>src/utils/auth/user-identity/user-identity.model.ts
+
+<span class="nb">touch </span>src/utils/auth/auth-handlers.ts
+<span class="nb">touch </span>src/utils/auth/authenticated-middleware.ts
+</code></pre></div></div>
+
+<p>L’user lo creiamo più avanti, ma per ora per creare la <code class="language-plaintext highlighter-rouge">jwt strategy</code> ci serve l’interface e il model dello user, quindi copia questa interface in <code class="language-plaintext highlighter-rouge">src/api/user/user.interface.ts</code>
+<code class="language-plaintext highlighter-rouge">user.interface.ts</code></p>
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">export</span> <span class="kr">interface</span> <span class="nx">User</span> <span class="p">{</span>
+  <span class="c1">// Unique ID</span>
+  <span class="nl">id</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="c1">// Base Info</span>
+  <span class="nl">firstName</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">lastName</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">picture</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="c1">// Authentication Info</span>
+  <span class="nl">status</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">role</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">isConfirmed</span><span class="p">?:</span> <span class="nx">boolean</span><span class="p">;</span>
+  <span class="c1">// Security Info</span>
+  <span class="nl">createdAt</span><span class="p">?:</span> <span class="nb">Date</span> <span class="o">|</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">lastUpdateAt</span><span class="p">?:</span> <span class="nb">Date</span> <span class="o">|</span> <span class="kr">string</span> <span class="o">|</span> <span class="kc">undefined</span><span class="p">;</span>
+  <span class="nl">lastLogin</span><span class="p">?:</span> <span class="nb">Date</span> <span class="o">|</span> <span class="kr">string</span> <span class="o">|</span> <span class="kc">undefined</span><span class="p">;</span>
+  <span class="nl">lastAllowedIp</span><span class="p">?:</span> <span class="kr">string</span> <span class="o">|</span> <span class="kc">undefined</span><span class="p">;</span>
+  <span class="nl">allowedIps</span><span class="p">?:</span> <span class="kr">string</span><span class="p">[]</span> <span class="o">|</span> <span class="kc">undefined</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">user.model.ts</code></p>
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nx">mongoose</span><span class="p">,</span> <span class="p">{</span> <span class="nx">Document</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">mongoose</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">User</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./user.entity</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">USER_ROLE_ENUM</span><span class="p">,</span> <span class="nx">USER_STATUS_ENUM</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../../utils/enums/user.enum</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">userSchema</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">mongoose</span><span class="p">.</span><span class="nx">Schema</span><span class="o">&lt;</span><span class="nx">User</span><span class="o">&gt;</span><span class="p">({</span>
+  <span class="na">firstName</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span> <span class="p">},</span>
+  <span class="na">lastName</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span> <span class="p">},</span>
+  <span class="na">picture</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="dl">""</span> <span class="p">},</span>
+
+  <span class="na">status</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="na">enum</span><span class="p">:</span> <span class="nx">USER_STATUS_ENUM</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">},</span>
+  <span class="na">role</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="na">enum</span><span class="p">:</span> <span class="nx">USER_ROLE_ENUM</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="dl">"</span><span class="s2">user</span><span class="dl">"</span> <span class="p">},</span>
+  <span class="na">isConfirmed</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Boolean</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">false</span> <span class="p">},</span>
+
+  <span class="na">createdAt</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Date</span> <span class="o">||</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">},</span>
+  <span class="na">lastUpdateAt</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Date</span> <span class="o">||</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">},</span>
+  <span class="na">lastLogin</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Date</span> <span class="o">||</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">},</span>
+  <span class="na">lastAllowedIp</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">},</span>
+  <span class="na">allowedIps</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="p">[</span><span class="nb">String</span><span class="p">],</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="nx">userSchema</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="dl">"</span><span class="s2">toJSON</span><span class="dl">"</span><span class="p">,</span> <span class="p">{</span>
+  <span class="na">virtuals</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+  <span class="na">transform</span><span class="p">:</span> <span class="p">(</span><span class="na">_</span><span class="p">:</span> <span class="nx">Document</span><span class="p">,</span> <span class="na">ret</span><span class="p">:</span> <span class="nb">Record</span><span class="o">&lt;</span><span class="kr">string</span><span class="p">,</span> <span class="kr">any</span><span class="o">&gt;</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="k">delete</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">_id</span><span class="p">;</span>
+    <span class="k">delete</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">__v</span><span class="p">;</span>
+    <span class="k">delete</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">isConfirmed</span><span class="p">;</span>
+    <span class="k">if </span><span class="p">(</span><span class="nx">ret</span><span class="p">.</span><span class="nx">role</span> <span class="o">===</span> <span class="dl">"</span><span class="s2">user</span><span class="dl">"</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">delete</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">storeIds</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">ret</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="nx">userSchema</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="dl">"</span><span class="s2">toObject</span><span class="dl">"</span><span class="p">,</span> <span class="p">{</span>
+  <span class="na">virtuals</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+  <span class="na">transform</span><span class="p">:</span> <span class="p">(</span><span class="na">_</span><span class="p">:</span> <span class="nx">Document</span><span class="p">,</span> <span class="na">ret</span><span class="p">:</span> <span class="nb">Record</span><span class="o">&lt;</span><span class="kr">string</span><span class="p">,</span> <span class="kr">any</span><span class="o">&gt;</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="k">delete</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">_id</span><span class="p">;</span>
+    <span class="k">delete</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">__v</span><span class="p">;</span>
+    <span class="c1">// delete ret.isConfirmed;</span>
+    <span class="k">if </span><span class="p">(</span><span class="nx">ret</span><span class="p">.</span><span class="nx">role</span> <span class="o">===</span> <span class="dl">"</span><span class="s2">user</span><span class="dl">"</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">delete</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">storeIds</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">ret</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">UserModel</span> <span class="o">=</span> <span class="nx">mongoose</span><span class="p">.</span><span class="nx">model</span><span class="o">&lt;</span><span class="nx">User</span><span class="o">&gt;</span><span class="p">(</span><span class="dl">"</span><span class="s2">User</span><span class="dl">"</span><span class="p">,</span> <span class="nx">userSchema</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">user.enum.ts</code></p>
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">export</span> <span class="kd">const</span> <span class="nx">USER_ROLE_ENUM</span> <span class="o">=</span> <span class="p">[</span><span class="dl">"</span><span class="s2">admin</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">user</span><span class="dl">"</span><span class="p">]</span> <span class="kd">as const</span><span class="p">;</span>
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">USER_STATUS_ENUM</span> <span class="o">=</span> <span class="p">[</span><span class="dl">"</span><span class="s2">active</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">inactive</span><span class="dl">"</span><span class="p">];</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">user.type.ts</code></p>
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">USER_ROLE_ENUM</span><span class="p">,</span> <span class="nx">USER_STATUS_ENUM</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../enums/user.enum</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">type</span> <span class="nx">UserRole</span> <span class="o">=</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">USER_ROLE_ENUM</span><span class="p">)[</span><span class="kr">number</span><span class="p">];</span> <span class="c1">// "admin" | "user"</span>
+<span class="k">export</span> <span class="kd">type</span> <span class="nx">UserStatus</span> <span class="o">=</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">USER_STATUS_ENUM</span><span class="p">)[</span><span class="kr">number</span><span class="p">];</span> <span class="c1">// "active" | "inactive"</span>
+</code></pre></div></div>
+
+<h3 id="dotenvts"><code class="language-plaintext highlighter-rouge">dotenv.ts</code></h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="dl">"</span><span class="s2">dotenv/config</span><span class="dl">"</span><span class="p">;</span> <span class="c1">// Load environment variables from .env file</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">CustomError</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../errors/custom</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">DotEnvError</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../errors/dotenv</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="kr">interface</span> <span class="nx">RequireEnvOptions</span> <span class="p">{</span>
+  <span class="nl">throwOnMissing</span><span class="p">?:</span> <span class="nx">boolean</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// OVERLOADS</span>
+<span class="k">export</span> <span class="kd">function</span> <span class="nf">requireEnvVars</span><span class="p">(</span><span class="nx">field</span><span class="p">:</span> <span class="kr">string</span><span class="p">):</span> <span class="kr">string</span><span class="p">;</span>
+<span class="k">export</span> <span class="kd">function</span> <span class="nf">requireEnvVars</span><span class="p">(</span>
+  <span class="nx">field</span><span class="p">:</span> <span class="kr">string</span><span class="p">,</span>
+  <span class="nx">options</span><span class="p">:</span> <span class="p">{</span> <span class="nl">throwOnMissing</span><span class="p">:</span> <span class="kc">false</span> <span class="p">}</span>
+<span class="p">):</span> <span class="kr">string</span> <span class="o">|</span> <span class="kc">undefined</span><span class="p">;</span>
+<span class="k">export</span> <span class="kd">function</span> <span class="nf">requireEnvVars</span><span class="p">(</span>
+  <span class="nx">field</span><span class="p">:</span> <span class="kr">string</span><span class="p">,</span>
+  <span class="nx">options</span><span class="p">?:</span> <span class="nx">RequireEnvOptions</span>
+<span class="p">):</span> <span class="kr">string</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">function</span> <span class="nf">requireEnvVars</span><span class="p">(</span><span class="nx">fields</span><span class="p">:</span> <span class="kr">string</span><span class="p">[]):</span> <span class="kr">string</span><span class="p">[];</span>
+<span class="k">export</span> <span class="kd">function</span> <span class="nf">requireEnvVars</span><span class="p">(</span>
+  <span class="nx">fields</span><span class="p">:</span> <span class="kr">string</span><span class="p">[],</span>
+  <span class="nx">options</span><span class="p">:</span> <span class="p">{</span> <span class="nl">throwOnMissing</span><span class="p">:</span> <span class="kc">false</span> <span class="p">}</span>
+<span class="p">):</span> <span class="p">(</span><span class="kr">string</span> <span class="o">|</span> <span class="kc">undefined</span><span class="p">)[];</span>
+<span class="k">export</span> <span class="kd">function</span> <span class="nf">requireEnvVars</span><span class="p">(</span>
+  <span class="nx">fields</span><span class="p">:</span> <span class="kr">string</span><span class="p">[],</span>
+  <span class="nx">options</span><span class="p">?:</span> <span class="nx">RequireEnvOptions</span>
+<span class="p">):</span> <span class="kr">string</span><span class="p">[];</span>
+
+<span class="c1">// IMPLEMENTAZIONE UNICA</span>
+<span class="k">export</span> <span class="kd">function</span> <span class="nf">requireEnvVars</span><span class="p">(</span>
+  <span class="nx">fields</span><span class="p">:</span> <span class="kr">string</span> <span class="o">|</span> <span class="kr">string</span><span class="p">[],</span>
+  <span class="nx">options</span><span class="p">:</span> <span class="nx">RequireEnvOptions</span> <span class="o">=</span> <span class="p">{</span> <span class="na">throwOnMissing</span><span class="p">:</span> <span class="kc">true</span> <span class="p">}</span>
+<span class="p">):</span> <span class="nx">unknown</span> <span class="p">{</span>
+  <span class="kd">const</span> <span class="p">{</span> <span class="nx">throwOnMissing</span> <span class="p">}</span> <span class="o">=</span> <span class="nx">options</span><span class="p">;</span>
+
+  <span class="kd">const</span> <span class="nx">isMissing</span> <span class="o">=</span> <span class="p">(</span><span class="nx">key</span><span class="p">:</span> <span class="kr">string</span><span class="p">):</span> <span class="nx">boolean</span> <span class="o">=&gt;</span>
+    <span class="k">typeof</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">!==</span> <span class="dl">"</span><span class="s2">string</span><span class="dl">"</span> <span class="o">||</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">[</span><span class="nx">key</span><span class="p">]?.</span><span class="nf">trim</span><span class="p">()</span> <span class="o">===</span> <span class="dl">""</span><span class="p">;</span>
+
+  <span class="kd">const</span> <span class="nx">getValue</span> <span class="o">=</span> <span class="p">(</span><span class="nx">key</span><span class="p">:</span> <span class="kr">string</span><span class="p">):</span> <span class="kr">string</span> <span class="o">|</span> <span class="kc">undefined</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="k">if </span><span class="p">(</span><span class="nf">isMissing</span><span class="p">(</span><span class="nx">key</span><span class="p">))</span> <span class="p">{</span>
+      <span class="k">if </span><span class="p">(</span><span class="nx">throwOnMissing</span><span class="p">)</span> <span class="k">throw</span> <span class="k">new</span> <span class="nc">DotEnvError</span><span class="p">(</span><span class="nx">key</span><span class="p">);</span>
+      <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span><span class="o">!</span><span class="p">.</span><span class="nf">trim</span><span class="p">();</span>
+  <span class="p">};</span>
+
+  <span class="k">if </span><span class="p">(</span><span class="k">typeof</span> <span class="nx">fields</span> <span class="o">===</span> <span class="dl">"</span><span class="s2">string</span><span class="dl">"</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nf">getValue</span><span class="p">(</span><span class="nx">fields</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="k">if </span><span class="p">(</span><span class="nb">Array</span><span class="p">.</span><span class="nf">isArray</span><span class="p">(</span><span class="nx">fields</span><span class="p">))</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">fields</span><span class="p">.</span><span class="nf">map</span><span class="p">((</span><span class="nx">key</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="k">if </span><span class="p">(</span><span class="k">typeof</span> <span class="nx">key</span> <span class="o">!==</span> <span class="dl">"</span><span class="s2">string</span><span class="dl">"</span> <span class="o">||</span> <span class="nx">key</span><span class="p">.</span><span class="nf">trim</span><span class="p">()</span> <span class="o">===</span> <span class="dl">""</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if </span><span class="p">(</span><span class="nx">throwOnMissing</span><span class="p">)</span> <span class="k">throw</span> <span class="k">new</span> <span class="nc">DotEnvError</span><span class="p">(</span><span class="nx">key</span><span class="p">);</span>
+        <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">return</span> <span class="nf">getValue</span><span class="p">(</span><span class="nx">key</span><span class="p">);</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+
+  <span class="k">throw</span> <span class="k">new</span> <span class="nc">CustomError</span><span class="p">(</span>
+    <span class="dl">"</span><span class="s2">Invalid argument</span><span class="dl">"</span><span class="p">,</span>
+    <span class="s2">`Expected a string or an array of strings, but received: </span><span class="p">${</span><span class="k">typeof</span> <span class="nx">fields</span><span class="p">}</span><span class="s2">`</span><span class="p">,</span>
+    <span class="mi">400</span>
+  <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">notThrowDotEnvError</span><span class="p">:</span> <span class="nx">RequireEnvOptions</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="na">throwOnMissing</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>Questo file è stato creato per assicurarsi che tutte le variabili che si richiedono dal file <code class="language-plaintext highlighter-rouge">.env</code> esistano, se non esistono richiamerà un errore <code class="language-plaintext highlighter-rouge">DotEnvError</code> che ti mostrerà la variabile che manca nel file <code class="language-plaintext highlighter-rouge">.env</code>. Esiste anche la possibilità di non generare errore aggiungendo <code class="language-plaintext highlighter-rouge">notThrowDotEnvError</code> come secondo parametro. Ora vediamo come usarlo</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Richiamare più variabili nello stesso tempo</span>
+<span class="kd">const</span> <span class="p">[</span><span class="nx">MONGO_URI</span><span class="p">,</span> <span class="nx">DB_NAME</span><span class="p">,</span> <span class="nx">PORT</span><span class="p">]</span> <span class="o">=</span> <span class="nf">requireEnvVars</span><span class="p">([</span><span class="dl">"</span><span class="s2">MONGO_URI</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">DB_NAME</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">PORT</span><span class="dl">"</span><span class="p">]);</span>
+<span class="c1">// Richiamo singola variabile</span>
+<span class="kd">const</span> <span class="nx">JWT_SECRET</span> <span class="o">=</span> <span class="nf">requireEnvVars</span><span class="p">(</span><span class="dl">"</span><span class="s2">JWT_SECRET</span><span class="dl">"</span><span class="p">);</span>
+
+<span class="c1">// Richiamare più variabili nello stesso tempo senza generare errore</span>
+<span class="kd">const</span> <span class="p">[</span><span class="nx">MONGO_URI</span><span class="p">,</span> <span class="nx">DB_NAME</span><span class="p">,</span> <span class="nx">PORT</span><span class="p">]</span> <span class="o">=</span> <span class="nf">requireEnvVars</span><span class="p">([</span><span class="dl">"</span><span class="s2">MONGO_URI</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">DB_NAME</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">PORT</span><span class="dl">"</span><span class="p">],</span> <span class="nx">notThrowDotEnvError</span><span class="p">);</span>
+<span class="c1">// Richiamo singola variabile senza generare errore</span>
+<span class="kd">const</span> <span class="nx">JWT_SECRET</span> <span class="o">=</span> <span class="nf">requireEnvVars</span><span class="p">(</span><span class="dl">"</span><span class="s2">JWT_SECRET</span><span class="dl">"</span><span class="p">,</span> <span class="nx">notThrowDotEnvError</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h3 id="emailtemplatets"><code class="language-plaintext highlighter-rouge">email.template.ts</code></h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">export</span> <span class="kd">const</span> <span class="nx">registrationEmailTemplate</span> <span class="o">=</span> <span class="p">(</span><span class="nx">verificationLink</span><span class="p">:</span> <span class="kr">string</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="s2">`
+Template della mail con il </span><span class="p">${</span><span class="nx">verificationLink</span><span class="p">}</span><span class="s2"> di verifica della mail
+`</span>
+</code></pre></div></div>
+
+<p>Questo file conterrà tutti i template delle mail, da qui verranno chiamati i body di tutte le mail che dovrai inviare</p>
+
+<h3 id="greater-thanvalidatorts"><code class="language-plaintext highlighter-rouge">greater-than.validator.ts</code></h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">registerDecorator</span><span class="p">,</span> <span class="nx">ValidationOptions</span><span class="p">,</span> <span class="nx">ValidationArguments</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">class-validator</span><span class="dl">'</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">function</span> <span class="nf">IsGreaterThan</span><span class="p">(</span><span class="nx">property</span><span class="p">:</span> <span class="kr">string</span><span class="p">,</span> <span class="nx">validationOptions</span><span class="p">?:</span> <span class="nx">ValidationOptions</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="nf">function </span><span class="p">(</span><span class="nx">object</span><span class="p">:</span> <span class="nb">Object</span><span class="p">,</span> <span class="nx">propertyName</span><span class="p">:</span> <span class="kr">string</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nf">registerDecorator</span><span class="p">({</span>
+      <span class="na">name</span><span class="p">:</span> <span class="dl">'</span><span class="s1">isGreaterThan</span><span class="dl">'</span><span class="p">,</span>
+      <span class="na">target</span><span class="p">:</span> <span class="nx">object</span><span class="p">.</span><span class="kd">constructor</span><span class="p">,</span>
+      <span class="na">propertyName</span><span class="p">:</span> <span class="nx">propertyName</span><span class="p">,</span>
+      <span class="na">constraints</span><span class="p">:</span> <span class="p">[</span><span class="nx">property</span><span class="p">],</span>
+      <span class="na">options</span><span class="p">:</span> <span class="nx">validationOptions</span><span class="p">,</span>
+      <span class="na">validator</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nf">validate</span><span class="p">(</span><span class="na">value</span><span class="p">:</span> <span class="kr">any</span><span class="p">,</span> <span class="na">args</span><span class="p">:</span> <span class="nx">ValidationArguments</span><span class="p">)</span> <span class="p">{</span>
+          <span class="kd">const</span> <span class="p">[</span><span class="nx">relatedPropertyName</span><span class="p">]</span> <span class="o">=</span> <span class="nx">args</span><span class="p">.</span><span class="nx">constraints</span><span class="p">;</span>
+          <span class="kd">const</span> <span class="nx">relatedValue</span> <span class="o">=</span> <span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">object</span> <span class="kd">as </span><span class="kr">any</span><span class="p">)[</span><span class="nx">relatedPropertyName</span><span class="p">];</span>
+          <span class="k">return</span> <span class="nx">relatedValue</span> <span class="o">!==</span> <span class="kc">undefined</span> <span class="p">?</span> <span class="nx">value</span> <span class="o">&gt;</span> <span class="nx">relatedValue</span> <span class="p">:</span> <span class="kc">true</span><span class="p">;</span>
+        <span class="p">},</span>
+      <span class="p">},</span>
+    <span class="p">});</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Il decoratore <code class="language-plaintext highlighter-rouge">IsGreaterThan</code> è un <strong>custom validator</strong>. Il suo scopo è quello di verificare che <strong>il valore di una proprietà sia maggiore</strong> rispetto al valore di un’altra proprietà dello stesso oggetto. Ora vediamo qualche caso d’uso</p>
+
+<p>Range numerico</p>
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">IsGreaterThan</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">./is-greater-than.decorator</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">IsNumber</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">class-validator</span><span class="dl">'</span><span class="p">;</span>
+
+<span class="kd">class</span> <span class="nc">RangeDto</span> <span class="p">{</span>
+  <span class="p">@</span><span class="nd">IsNumber</span><span class="p">()</span>
+  <span class="nx">min</span><span class="p">:</span> <span class="kr">number</span><span class="p">;</span>
+
+  <span class="p">@</span><span class="nd">IsNumber</span><span class="p">()</span>
+  <span class="p">@</span><span class="nd">IsGreaterThan</span><span class="p">(</span><span class="dl">'</span><span class="s1">min</span><span class="dl">'</span><span class="p">,</span> <span class="p">{</span> <span class="na">message</span><span class="p">:</span> <span class="dl">'</span><span class="s1">max deve essere maggiore di min</span><span class="dl">'</span> <span class="p">})</span>
+  <span class="nx">max</span><span class="p">:</span> <span class="kr">number</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// Uso</span>
+<span class="kd">const</span> <span class="nx">dto</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RangeDto</span><span class="p">();</span>
+<span class="nx">dto</span><span class="p">.</span><span class="nx">min</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+<span class="nx">dto</span><span class="p">.</span><span class="nx">max</span> <span class="o">=</span> <span class="mi">20</span><span class="p">;</span>
+<span class="c1">// Validazione OK</span>
+
+<span class="nx">dto</span><span class="p">.</span><span class="nx">max</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+<span class="c1">// ❌ Errore: "max deve essere maggiore di min"</span>
+</code></pre></div></div>
+
+<p>Range di date</p>
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">IsDate</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">class-validator</span><span class="dl">'</span><span class="p">;</span>
+
+<span class="kd">class</span> <span class="nc">PeriodDto</span> <span class="p">{</span>
+  <span class="p">@</span><span class="nd">IsDate</span><span class="p">()</span>
+  <span class="nx">startDate</span><span class="p">:</span> <span class="nb">Date</span><span class="p">;</span>
+
+  <span class="p">@</span><span class="nd">IsDate</span><span class="p">()</span>
+  <span class="p">@</span><span class="nd">IsGreaterThan</span><span class="p">(</span><span class="dl">'</span><span class="s1">startDate</span><span class="dl">'</span><span class="p">,</span> <span class="p">{</span> <span class="na">message</span><span class="p">:</span> <span class="dl">'</span><span class="s1">La data di fine deve essere successiva a quella di inizio</span><span class="dl">'</span> <span class="p">})</span>
+  <span class="nx">endDate</span><span class="p">:</span> <span class="nb">Date</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// Uso</span>
+<span class="kd">const</span> <span class="nx">dto</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">PeriodDto</span><span class="p">();</span>
+<span class="nx">dto</span><span class="p">.</span><span class="nx">startDate</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Date</span><span class="p">(</span><span class="dl">'</span><span class="s1">2025-06-01</span><span class="dl">'</span><span class="p">);</span>
+<span class="nx">dto</span><span class="p">.</span><span class="nx">endDate</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Date</span><span class="p">(</span><span class="dl">'</span><span class="s1">2025-06-10</span><span class="dl">'</span><span class="p">);</span>
+<span class="c1">// ✅ OK</span>
+
+<span class="nx">dto</span><span class="p">.</span><span class="nx">endDate</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Date</span><span class="p">(</span><span class="dl">'</span><span class="s1">2025-05-30</span><span class="dl">'</span><span class="p">);</span>
+<span class="c1">// ❌ Errore: "La data di fine deve essere successiva a quella di inizio"</span>
+</code></pre></div></div>
+
+<h3 id="is-populated-objts"><code class="language-plaintext highlighter-rouge">is-populated-obj.ts</code></h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">isObjectIdOrHexString</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">mongoose</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">function</span> <span class="nf">isPopulated</span><span class="o">&lt;</span><span class="nx">T</span> <span class="kd">extends</span> <span class="p">{</span> <span class="na">id</span><span class="p">:</span> <span class="kr">string</span> <span class="p">}</span><span class="o">&gt;</span><span class="p">(</span><span class="nx">arg</span><span class="p">:</span> <span class="kr">string</span> <span class="o">|</span> <span class="nx">T</span><span class="p">):</span> <span class="nx">arg</span> <span class="k">is</span> <span class="nx">T</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="o">!</span><span class="nf">isObjectIdOrHexString</span><span class="p">(</span><span class="nx">arg</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Questa funzione TypeScript si chiama <code class="language-plaintext highlighter-rouge">isPopulated</code> e serve per distinguere tra:</p>
+<ul>
+  <li>un <strong>ObjectId</strong> (in formato stringa), <strong>non popolato</strong></li>
+  <li>e un <strong>oggetto Mongoose popolato</strong>, ovvero un documento con proprietà (incluso <code class="language-plaintext highlighter-rouge">id</code>)
+Vediamo un esempio pratico</li>
+</ul>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">user</span> <span class="o">=</span> <span class="dl">'</span><span class="s1">60d21b4667d0d8992e610c85</span><span class="dl">'</span><span class="p">;</span> <span class="c1">// ObjectId string</span>
+<span class="kd">const</span> <span class="nx">populatedUser</span> <span class="o">=</span> <span class="p">{</span> <span class="na">id</span><span class="p">:</span> <span class="dl">'</span><span class="s1">60d21b...</span><span class="dl">'</span><span class="p">,</span> <span class="na">name</span><span class="p">:</span> <span class="dl">'</span><span class="s1">Mario</span><span class="dl">'</span> <span class="p">};</span> <span class="c1">// Oggetto popolato</span>
+
+<span class="nf">isPopulated</span><span class="p">(</span><span class="nx">user</span><span class="p">);</span>          <span class="c1">// false</span>
+<span class="nf">isPopulated</span><span class="p">(</span><span class="nx">populatedUser</span><span class="p">);</span> <span class="c1">// true</span>
+</code></pre></div></div>
+
+<h3 id="typed-requestts"><code class="language-plaintext highlighter-rouge">typed-request.ts</code></h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">Request</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">ParamsDictionary</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express-serve-static-core</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">ParsedQs</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">qs</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kr">interface</span> <span class="nx">TypedRequest</span><span class="o">&lt;</span><span class="nx">T</span> <span class="o">=</span> <span class="nx">unknown</span><span class="p">,</span> <span class="nx">Q</span> <span class="o">=</span> <span class="nx">ParsedQs</span><span class="p">,</span> <span class="nx">P</span> <span class="o">=</span> <span class="nx">ParamsDictionary</span><span class="o">&gt;</span>
+  <span class="kd">extends</span> <span class="nx">Request</span><span class="o">&lt;</span><span class="nx">P</span><span class="p">,</span> <span class="kr">any</span><span class="p">,</span> <span class="nx">T</span><span class="p">,</span> <span class="nx">Q</span><span class="o">&gt;</span> <span class="p">{}</span>
+
+<span class="k">export</span> <span class="kd">type</span> <span class="nx">RequestWithBody</span><span class="o">&lt;</span><span class="nx">B</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nx">TypedRequest</span><span class="o">&lt;</span><span class="nx">B</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">export</span> <span class="kd">type</span> <span class="nx">RequestWithQuery</span><span class="o">&lt;</span><span class="nx">Q</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nx">TypedRequest</span><span class="o">&lt;</span><span class="nx">unknown</span><span class="p">,</span> <span class="nx">Q</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">export</span> <span class="kd">type</span> <span class="nx">RequestWithParams</span><span class="o">&lt;</span><span class="nx">P</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nx">TypedRequest</span><span class="o">&lt;</span><span class="nx">unknown</span><span class="p">,</span> <span class="nx">unknown</span><span class="p">,</span> <span class="nx">P</span><span class="o">&gt;</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>Questa interface molto complicata a prima vista ti permette di tipizzare le richieste che fai di solito con express, ora vediamo qualche esempio. se ti serve solo un tipo allora usa i 3 tipi esportati in basso, se te ne servono 2 o piu usa <code class="language-plaintext highlighter-rouge">TypedRequest</code> tenendo conto che devi andare in ordine, ovvero <code class="language-plaintext highlighter-rouge">body</code>, <code class="language-plaintext highlighter-rouge">query</code> e poi <code class="language-plaintext highlighter-rouge">param</code>, se te ne servono solo 2 scrivi <code class="language-plaintext highlighter-rouge">unknown</code> sul campo mancante</p>
+
+<p>Con <code class="language-plaintext highlighter-rouge">Request</code> standard:</p>
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">Request</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="kd">const</span> <span class="nx">handler</span> <span class="o">=</span> <span class="p">(</span><span class="nx">req</span><span class="p">:</span> <span class="nx">Request</span><span class="p">,</span> <span class="nx">res</span><span class="p">:</span> <span class="nx">Response</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="nx">req</span><span class="p">.</span><span class="nx">body</span><span class="p">;</span>   <span class="c1">// tipo: any</span>
+  <span class="nx">req</span><span class="p">.</span><span class="nx">query</span><span class="p">;</span>  <span class="c1">// tipo: ParsedQs (generico)</span>
+  <span class="nx">req</span><span class="p">.</span><span class="nx">params</span><span class="p">;</span> <span class="c1">// tipo: ParamsDictionary (generico)</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<ul>
+  <li>❌ <strong>Poca intelligenza dell’IDE</strong></li>
+  <li>❌ Devi ricordarti “a mano” come sono fatti i dati</li>
+  <li>❌ Più facile fare errori di tipo</li>
+</ul>
+
+<h3 id="con-typedrequest">Con <code class="language-plaintext highlighter-rouge">TypedRequest</code>:</h3>
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">type</span> <span class="nx">Body</span> <span class="o">=</span> <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="kr">string</span> <span class="p">};</span>
+<span class="kd">type</span> <span class="nx">Query</span> <span class="o">=</span> <span class="p">{</span> <span class="na">debug</span><span class="p">:</span> <span class="nx">boolean</span> <span class="p">};</span>
+<span class="kd">type</span> <span class="nx">Params</span> <span class="o">=</span> <span class="p">{</span> <span class="na">id</span><span class="p">:</span> <span class="kr">string</span> <span class="p">};</span>
+
+<span class="kd">const</span> <span class="nx">handler</span> <span class="o">=</span> <span class="p">(</span>
+  <span class="nx">req</span><span class="p">:</span> <span class="nx">TypedRequest</span><span class="o">&lt;</span><span class="nx">Body</span><span class="p">,</span> <span class="nx">Query</span><span class="p">,</span> <span class="nx">Params</span><span class="o">&gt;</span><span class="p">,</span>
+  <span class="nx">res</span><span class="p">:</span> <span class="nx">Response</span>
+<span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="nx">req</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>    <span class="c1">// ✅ TypeScript sa che è string</span>
+  <span class="nx">req</span><span class="p">.</span><span class="nx">query</span><span class="p">.</span><span class="nx">debug</span><span class="p">;</span>  <span class="c1">// ✅ boolean</span>
+  <span class="nx">req</span><span class="p">.</span><span class="nx">params</span><span class="p">.</span><span class="nx">id</span><span class="p">;</span>    <span class="c1">// ✅ string</span>
+<span class="p">};</span>
+
+</code></pre></div></div>
+
+<ul>
+  <li>✅ <strong>Autocompletamento</strong></li>
+  <li>✅ <strong>Validazione a compile-time</strong></li>
+  <li>✅ IDE ti aiuta a non sbagliare
+    <h4 id="-in-sintesi">💡 In sintesi</h4>
+  </li>
+</ul>
+
+<table>
+  <thead>
+    <tr>
+      <th><code class="language-plaintext highlighter-rouge">Request</code> di Express</th>
+      <th><code class="language-plaintext highlighter-rouge">TypedRequest</code> personalizzato</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Generico, non tipizzato</td>
+      <td>Tipi forti su <code class="language-plaintext highlighter-rouge">body</code>, <code class="language-plaintext highlighter-rouge">query</code>, <code class="language-plaintext highlighter-rouge">params</code></td>
+    </tr>
+    <tr>
+      <td>Rischio errori a runtime</td>
+      <td>Errori presi in fase di compilazione</td>
+    </tr>
+    <tr>
+      <td>Nessun autocomplete utile</td>
+      <td>Intellisense completo</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 id="-quando-ti-serve">🧠 Quando ti serve?</h4>
+
+<p>Usa <code class="language-plaintext highlighter-rouge">TypedRequest</code> <strong>quando vuoi maggiore sicurezza</strong> e chiarezza, soprattutto in:</p>
+<ul>
+  <li>Controller REST (es. <code class="language-plaintext highlighter-rouge">GET /users/:id</code>)</li>
+  <li>API complesse con parametri e query</li>
+  <li>Team di sviluppo (per evitare malintesi)</li>
+</ul>
+
+<h3 id="validation-middlewarets"><code class="language-plaintext highlighter-rouge">validation-middleware.ts</code></h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">NextFunction</span><span class="p">,</span> <span class="nx">Response</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">plainToClass</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">class-transformer</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">validate</span> <span class="kd">as </span><span class="nx">classValidate</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">class-validator</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">ValidationError</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../errors/validation</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">TypedRequest</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./typed-request</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="kd">function</span> <span class="nf">validateFn</span><span class="o">&lt;</span><span class="nx">T</span> <span class="kd">extends</span> <span class="nx">object</span><span class="o">&gt;</span><span class="p">(</span>
+  <span class="kd">type</span><span class="p">:</span> <span class="k">new </span><span class="p">()</span> <span class="o">=&gt;</span> <span class="nx">T</span>
+<span class="p">):</span> <span class="p">(</span><span class="nx">req</span><span class="p">:</span> <span class="nx">TypedRequest</span><span class="o">&lt;</span><span class="nx">T</span><span class="p">,</span> <span class="kr">any</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">res</span><span class="p">:</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">next</span><span class="p">:</span> <span class="nx">NextFunction</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="k">void</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="kd">function</span> <span class="nf">validateFn</span><span class="o">&lt;</span><span class="nx">T</span> <span class="kd">extends</span> <span class="nx">object</span><span class="o">&gt;</span><span class="p">(</span>
+  <span class="kd">type</span><span class="p">:</span> <span class="k">new </span><span class="p">()</span> <span class="o">=&gt;</span> <span class="nx">T</span><span class="p">,</span>
+  <span class="nx">origin</span><span class="p">:</span> <span class="dl">"</span><span class="s2">body</span><span class="dl">"</span>
+<span class="p">):</span> <span class="p">(</span><span class="nx">req</span><span class="p">:</span> <span class="nx">TypedRequest</span><span class="o">&lt;</span><span class="nx">T</span><span class="p">,</span> <span class="kr">any</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">res</span><span class="p">:</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">next</span><span class="p">:</span> <span class="nx">NextFunction</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="k">void</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="kd">function</span> <span class="nf">validateFn</span><span class="o">&lt;</span><span class="nx">T</span> <span class="kd">extends</span> <span class="nx">object</span><span class="o">&gt;</span><span class="p">(</span>
+  <span class="kd">type</span><span class="p">:</span> <span class="k">new </span><span class="p">()</span> <span class="o">=&gt;</span> <span class="nx">T</span><span class="p">,</span>
+  <span class="nx">origin</span><span class="p">:</span> <span class="dl">"</span><span class="s2">query</span><span class="dl">"</span>
+<span class="p">):</span> <span class="p">(</span><span class="nx">req</span><span class="p">:</span> <span class="nx">TypedRequest</span><span class="o">&lt;</span><span class="kr">any</span><span class="p">,</span> <span class="nx">T</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">res</span><span class="p">:</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">next</span><span class="p">:</span> <span class="nx">NextFunction</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="k">void</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="kd">function</span> <span class="nf">validateFn</span><span class="o">&lt;</span><span class="nx">T</span> <span class="kd">extends</span> <span class="nx">object</span><span class="o">&gt;</span><span class="p">(</span>
+  <span class="kd">type</span><span class="p">:</span> <span class="k">new </span><span class="p">()</span> <span class="o">=&gt;</span> <span class="nx">T</span><span class="p">,</span>
+  <span class="nx">origin</span><span class="p">:</span> <span class="dl">"</span><span class="s2">params</span><span class="dl">"</span>
+<span class="p">):</span> <span class="p">(</span><span class="nx">req</span><span class="p">:</span> <span class="nx">TypedRequest</span><span class="o">&lt;</span><span class="kr">any</span><span class="p">,</span> <span class="kr">any</span><span class="p">,</span> <span class="nx">T</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">res</span><span class="p">:</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">next</span><span class="p">:</span> <span class="nx">NextFunction</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="k">void</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="kd">function</span> <span class="nf">validateFn</span><span class="o">&lt;</span><span class="nx">T</span> <span class="kd">extends</span> <span class="nx">object</span><span class="o">&gt;</span><span class="p">(</span>
+  <span class="kd">type</span><span class="p">:</span> <span class="k">new </span><span class="p">()</span> <span class="o">=&gt;</span> <span class="nx">T</span><span class="p">,</span>
+  <span class="nx">origin</span><span class="p">:</span> <span class="dl">"</span><span class="s2">body</span><span class="dl">"</span> <span class="o">|</span> <span class="dl">"</span><span class="s2">query</span><span class="dl">"</span> <span class="o">|</span> <span class="dl">"</span><span class="s2">params</span><span class="dl">"</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">body</span><span class="dl">"</span>
+<span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="k">async </span><span class="p">(</span><span class="nx">req</span><span class="p">:</span> <span class="nx">TypedRequest</span><span class="o">&lt;</span><span class="kr">any</span><span class="p">,</span> <span class="kr">any</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">res</span><span class="p">:</span> <span class="nx">Response</span><span class="p">,</span> <span class="nx">next</span><span class="p">:</span> <span class="nx">NextFunction</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="kd">const</span> <span class="nx">data</span> <span class="o">=</span> <span class="nf">plainToClass</span><span class="p">(</span><span class="kd">type</span><span class="p">,</span> <span class="nx">req</span><span class="p">[</span><span class="nx">origin</span><span class="p">]);</span>
+    <span class="kd">const</span> <span class="nx">errors</span> <span class="o">=</span> <span class="k">await</span> <span class="nf">classValidate</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+
+    <span class="k">if </span><span class="p">(</span><span class="nx">errors</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nf">next</span><span class="p">(</span><span class="k">new</span> <span class="nc">ValidationError</span><span class="p">(</span><span class="nx">errors</span><span class="p">));</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="nx">req</span><span class="p">[</span><span class="nx">origin</span><span class="p">]</span> <span class="o">=</span> <span class="nx">data</span><span class="p">;</span>
+      <span class="nf">next</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">validate</span> <span class="o">=</span> <span class="nx">validateFn</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>Questo <code class="language-plaintext highlighter-rouge">middleware</code> serve per</p>
+<ul>
+  <li><strong>Convertire</strong> i dati ricevuti (<code class="language-plaintext highlighter-rouge">req.body</code>, <code class="language-plaintext highlighter-rouge">req.query</code>, o <code class="language-plaintext highlighter-rouge">req.params</code>) nel tipo di classe (<code class="language-plaintext highlighter-rouge">DTO</code>) che gli passi.</li>
+  <li>Se i dati sono <strong>invalidi</strong>, chiama <code class="language-plaintext highlighter-rouge">next()</code> con un errore di validazione (personalizzato: <code class="language-plaintext highlighter-rouge">ValidationError</code>). -&gt; <a href="node/02.errors_handling.md">vedi errori</a></li>
+</ul>
+
+<p>Esempio pratico</p>
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// In questo caso valida il body</span>
+<span class="nx">router</span><span class="p">.</span><span class="nf">post</span><span class="p">(</span><span class="dl">"</span><span class="s2">/register</span><span class="dl">"</span><span class="p">,</span> <span class="nf">validate</span><span class="p">(</span><span class="nx">AddUserDTO</span><span class="p">),</span> <span class="nx">add</span><span class="p">);</span>
+
+<span class="c1">// Validazione di tutte le richieste</span>
+<span class="nf">validate</span><span class="p">(</span><span class="nx">SomeDto</span><span class="p">,</span> <span class="dl">"</span><span class="s2">body</span><span class="dl">"</span><span class="p">)</span> <span class="c1">// Default</span>
+<span class="nf">validate</span><span class="p">(</span><span class="nx">SomeDto</span><span class="p">,</span> <span class="dl">"</span><span class="s2">query</span><span class="dl">"</span><span class="p">)</span>
+<span class="nf">validate</span><span class="p">(</span><span class="nx">SomeDto</span><span class="p">,</span> <span class="dl">"</span><span class="s2">params</span><span class="dl">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="creazione-jwt-strategy">Creazione jwt strategy</h2>
+
+<h3 id="auth-handlersts"><code class="language-plaintext highlighter-rouge">auth-handlers.ts</code></h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="dl">"</span><span class="s2">./jwt/jwt-strategy</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="dl">"</span><span class="s2">./jwt/github-strategy</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="dl">"</span><span class="s2">./jwt/google-strategy</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="dl">"</span><span class="s2">./local/local-strategy</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">import</span> <span class="p">{</span> <span class="nx">User</span> <span class="kd">as </span><span class="nx">myUser</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../../api/user/user.entity</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="kr">declare</span> <span class="nb">global</span> <span class="p">{</span>
+  <span class="k">namespace</span> <span class="nx">Express</span> <span class="p">{</span>
+    <span class="kr">interface</span> <span class="nx">User</span> <span class="kd">extends</span> <span class="nx">myUser</span> <span class="p">{}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Intanto partiamo dal capire a cosa servono questi import scritti così:</p>
+<h3 id="-cosa-fanno-questi-import">✅ <strong>Cosa fanno questi import?</strong></h3>
+
+<p>Questi <strong>non importano nulla “esplicitamente”</strong>, ma eseguono <strong>il file per i suoi effetti collaterali</strong> (side effects).
+👉 È un pattern usato per “attivare” qualcosa al caricamento del modulo.</p>
+
+<h3 id="-in-pratica-questi-file-vengono-eseguiti-per-fare-una-cosa-come">🧠 <strong>In pratica, questi file vengono eseguiti per fare una cosa come:</strong></h3>
+
+<ul>
+  <li>Registrare strategie Passport (JWT, GitHub, Google, Local)</li>
+  <li>Inizializzare configurazioni globali (per collegare l’interface del nostro User alle varie strategy)</li>
+  <li>Agganciare middleware o estensioni</li>
+</ul>
+
+<p>Adesso capiamo a cosa serve la parte del <code class="language-plaintext highlighter-rouge">declare</code></p>
+<h2 id="-obiettivo-principale">✅ <strong>Obiettivo principale:</strong></h2>
+
+<p>Estendere il tipo <code class="language-plaintext highlighter-rouge">Express.User</code> per <strong>aggiungere le proprietà del tuo <code class="language-plaintext highlighter-rouge">User</code> personalizzato</strong> così che <code class="language-plaintext highlighter-rouge">req.user</code> abbia il <strong>tipo corretto in TypeScript</strong>.</p>
+
+<h3 id="authenticated-middlewarets"><code class="language-plaintext highlighter-rouge">authenticated-middleware.ts</code></h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nx">passport</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">passport</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">isAuthenticated</span> <span class="o">=</span> <span class="nx">passport</span><span class="p">.</span><span class="nf">authenticate</span><span class="p">(</span><span class="dl">"</span><span class="s2">jwt</span><span class="dl">"</span><span class="p">,</span> <span class="p">{</span> <span class="na">session</span><span class="p">:</span> <span class="kc">false</span> <span class="p">});</span>
+</code></pre></div></div>
+
+<h2 id="-a-cosa-serve-isauthenticated">🔐 A cosa serve <code class="language-plaintext highlighter-rouge">isAuthenticated</code>?</h2>
+
+<p>Questa riga crea un <strong>middleware Express</strong> che usa Passport per:</p>
+
+<ol>
+  <li><strong>Verificare</strong> che la richiesta contenga un JWT valido (JSON Web Token)</li>
+  <li><strong>Autenticare l’utente</strong> in base a quel token</li>
+  <li><strong>Bloccare l’accesso</strong> se il token non è valido, scaduto, o assente</li>
+</ol>
+
+<h2 id="️-come-funziona">🛠️ Come funziona</h2>
+
+<p><code class="language-plaintext highlighter-rouge">passport.authenticate("jwt")</code> fa riferimento a una <strong>strategia registrata</strong> precedentemente nel tuo file <code class="language-plaintext highlighter-rouge">jwt-strategy.ts</code> (che tu hai importato all’avvio del server).</p>
+
+<h2 id="-quando-usi">🔁 Quando usi:</h2>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">router</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nx">isAuthenticated</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>oppure in una singola chiamata nel router</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">router</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="dl">"</span><span class="s2">/me</span><span class="dl">"</span><span class="p">,</span> <span class="nx">isAuthenticated</span><span class="p">,</span> <span class="nx">me</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>Significa: <strong>“tutte le route che seguono richiedono un utente autenticato con un JWT valido.”</strong></p>
+
+<h2 id="-dettagli-dellopzione--session-false-">🔎 Dettagli dell’opzione <code class="language-plaintext highlighter-rouge">{ session: false }</code></h2>
+
+<ul>
+  <li>Disabilita l’uso delle <strong>sessioni</strong> (che Passport supporta di default)</li>
+  <li>Siccome JWT è <strong>stateless</strong>, non hai bisogno di salvare sessioni sul server</li>
+</ul>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">passport</span><span class="p">.</span><span class="nf">authenticate</span><span class="p">(</span><span class="dl">"</span><span class="s2">jwt</span><span class="dl">"</span><span class="p">,</span> <span class="p">{</span> <span class="na">session</span><span class="p">:</span> <span class="kc">false</span> <span class="p">});</span>
+</code></pre></div></div>
+
+<p>significa: _“autentica con JWT, senza salvare nulla nel server.”</p>
+
+<h3 id="jwt-strategyts"><code class="language-plaintext highlighter-rouge">jwt-strategy.ts</code></h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="dl">"</span><span class="s2">dotenv/config</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="nx">passport</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">passport</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">ExtractJwt</span><span class="p">,</span> <span class="nx">VerifiedCallback</span><span class="p">,</span> <span class="nx">Strategy</span> <span class="kd">as </span><span class="nx">JwtStrategy</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">passport-jwt</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">UserModel</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../../../api/user/user.model</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">requireEnvVars</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../../../utils/dotenv</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="kd">const</span> <span class="nx">JWT_SECRET</span> <span class="o">=</span> <span class="nf">requireEnvVars</span><span class="p">(</span><span class="dl">"</span><span class="s2">JWT_SECRET</span><span class="dl">"</span><span class="p">);</span>
+
+<span class="nx">passport</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span>
+  <span class="k">new</span> <span class="nc">JwtStrategy</span><span class="p">(</span>
+    <span class="p">{</span>
+      <span class="na">jwtFromRequest</span><span class="p">:</span> <span class="nx">ExtractJwt</span><span class="p">.</span><span class="nf">fromAuthHeaderAsBearerToken</span><span class="p">(),</span>
+      <span class="na">secretOrKey</span><span class="p">:</span> <span class="nx">JWT_SECRET</span>
+    <span class="p">},</span>
+    <span class="k">async </span><span class="p">(</span><span class="nx">payload</span><span class="p">:</span> <span class="kr">any</span><span class="p">,</span> <span class="nx">done</span><span class="p">:</span> <span class="nx">VerifiedCallback</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="k">try</span> <span class="p">{</span>
+        <span class="kd">const</span> <span class="nx">user</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">UserModel</span><span class="p">.</span><span class="nf">findById</span><span class="p">(</span><span class="nx">payload</span><span class="p">.</span><span class="nx">id</span><span class="p">);</span>
+        <span class="k">if </span><span class="p">(</span><span class="nx">user</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nf">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">user</span><span class="p">.</span><span class="nf">toObject</span><span class="p">());</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="nf">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="p">{</span> <span class="na">message</span><span class="p">:</span> <span class="dl">"</span><span class="s2">invalid token</span><span class="dl">"</span> <span class="p">});</span>
+        <span class="p">}</span>
+      <span class="p">}</span> <span class="k">catch </span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nf">done</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">)</span>
+<span class="p">);</span>
+</code></pre></div></div>
+
+<h2 id="-in-sintesi-cosa-fa-questo-file">🔐 <strong>In sintesi: cosa fa questo file</strong></h2>
+
+<ol>
+  <li><strong>Configura</strong> Passport per usare i token JWT (JSON Web Token)</li>
+  <li>Estrae il token dalla richiesta (<code class="language-plaintext highlighter-rouge">Authorization: Bearer ...</code>)</li>
+  <li>Decodifica e verifica il token con una <strong>chiave segreta</strong></li>
+  <li>Se il token è valido, recupera l’utente dal database e lo attacca come <code class="language-plaintext highlighter-rouge">req.user</code></li>
+  <li>Se non è valido o non trova l’utente → fallisce con errore <code class="language-plaintext highlighter-rouge">401 Unauthorized</code></li>
+</ol>
+
+<h3 id="local-strategyts"><code class="language-plaintext highlighter-rouge">local-strategy.ts</code></h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nx">passport</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">passport</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">Strategy</span> <span class="kd">as </span><span class="nx">LocalStrategy</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">passport-local</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="o">*</span> <span class="kd">as </span><span class="nx">bcrypt</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">bcrypt</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">UserIdentityModel</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../user-identity/user-identity.model</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="nx">passport</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span>
+  <span class="k">new</span> <span class="nc">LocalStrategy</span><span class="p">(</span>
+    <span class="p">{</span>
+      <span class="na">usernameField</span><span class="p">:</span> <span class="dl">"</span><span class="s2">username</span><span class="dl">"</span><span class="p">,</span>
+      <span class="na">passwordField</span><span class="p">:</span> <span class="dl">"</span><span class="s2">password</span><span class="dl">"</span><span class="p">,</span>
+      <span class="na">session</span><span class="p">:</span> <span class="kc">false</span>
+    <span class="p">},</span>
+    <span class="k">async </span><span class="p">(</span><span class="nx">username</span><span class="p">:</span> <span class="kr">string</span><span class="p">,</span> <span class="nx">password</span><span class="p">:</span> <span class="kr">string</span><span class="p">,</span> <span class="nx">done</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="k">try</span> <span class="p">{</span>
+        <span class="kd">const</span> <span class="nx">identity</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">UserIdentityModel</span><span class="p">.</span><span class="nf">findOne</span><span class="p">({</span>
+          <span class="dl">"</span><span class="s2">credentials.username</span><span class="dl">"</span><span class="p">:</span> <span class="nx">username</span>
+        <span class="p">});</span>
+        <span class="k">if </span><span class="p">(</span><span class="o">!</span><span class="nx">identity</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nf">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="p">{</span>
+            <span class="na">message</span><span class="p">:</span> <span class="s2">`username </span><span class="p">${</span><span class="nx">username</span><span class="p">}</span><span class="s2"> not found`</span>
+          <span class="p">});</span>
+        <span class="p">}</span>
+        <span class="kd">const</span> <span class="nx">match</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">bcrypt</span><span class="p">.</span><span class="nf">compare</span><span class="p">(</span><span class="nx">password</span><span class="p">,</span> <span class="nx">identity</span><span class="p">.</span><span class="nx">credentials</span><span class="p">.</span><span class="nx">hashedPassword</span><span class="p">);</span>
+        <span class="k">if </span><span class="p">(</span><span class="nx">match</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nf">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">identity</span><span class="p">.</span><span class="nf">toObject</span><span class="p">().</span><span class="nx">user</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="nf">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="p">{</span> <span class="na">message</span><span class="p">:</span> <span class="dl">"</span><span class="s2">invalid password</span><span class="dl">"</span> <span class="p">});</span>
+      <span class="p">}</span> <span class="k">catch </span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nf">done</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">)</span>
+<span class="p">);</span>
+
+<span class="k">export</span> <span class="kd">function</span> <span class="nf">isValidResendEmail</span><span class="p">(</span><span class="nx">lastSent</span><span class="p">:</span> <span class="nb">Date</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">const</span> <span class="nx">now</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Date</span><span class="p">();</span>
+  <span class="kd">const</span> <span class="nx">oneHour</span> <span class="o">=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span><span class="p">;</span>
+
+  <span class="k">if </span><span class="p">(</span><span class="o">!</span><span class="nx">lastSent</span> <span class="o">||</span> <span class="nx">now</span><span class="p">.</span><span class="nf">getTime</span><span class="p">()</span> <span class="o">-</span> <span class="k">new</span> <span class="nc">Date</span><span class="p">(</span><span class="nx">lastSent</span><span class="p">).</span><span class="nf">getTime</span><span class="p">()</span> <span class="o">&gt;</span> <span class="nx">oneHour</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Questo file si occupa di fare l’autenticazione con <code class="language-plaintext highlighter-rouge">passport-local</code>, vediamo come viene creata la configurazione della strategia</p>
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">passport</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span>
+  <span class="k">new</span> <span class="nx">LocalStrategy</span><span class="p">(</span>
+    <span class="p">{</span>
+      <span class="na">usernameField</span><span class="p">:</span> <span class="dl">"</span><span class="s2">username</span><span class="dl">"</span><span class="p">,</span>
+      <span class="na">passwordField</span><span class="p">:</span> <span class="dl">"</span><span class="s2">password</span><span class="dl">"</span><span class="p">,</span>
+      <span class="na">session</span><span class="p">:</span> <span class="kc">false</span>
+    <span class="p">},</span>
+</code></pre></div></div>
+
+<p>Stiamo dicendo a Passport:</p>
+
+<ul>
+  <li>Quando ricevi una richiesta di login:
+    <ul>
+      <li>Leggi <code class="language-plaintext highlighter-rouge">req.body.username</code> come username.</li>
+      <li>Leggi <code class="language-plaintext highlighter-rouge">req.body.password</code> come password.</li>
+      <li>Non salvare una sessione (quindi niente <code class="language-plaintext highlighter-rouge">req.login()</code> o sessioni con cookie).</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Callback per la verifica</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">identity</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">UserIdentityModel</span><span class="p">.</span><span class="nf">findOne</span><span class="p">({</span>
+          <span class="dl">"</span><span class="s2">credentials.username</span><span class="dl">"</span><span class="p">:</span> <span class="nx">username</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<p>Cerca nel database un documento dove <code class="language-plaintext highlighter-rouge">credentials.username === username</code> (quindi il campo <code class="language-plaintext highlighter-rouge">username</code> è <strong>nidificato</strong> dentro <code class="language-plaintext highlighter-rouge">credentials</code>).</p>
+
+<p>Gestione utente non trovato</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if </span><span class="p">(</span><span class="o">!</span><span class="nx">identity</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nf">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="p">{</span>
+		<span class="na">message</span><span class="p">:</span> <span class="s2">`username </span><span class="p">${</span><span class="nx">username</span><span class="p">}</span><span class="s2"> not found`</span>
+	<span class="p">});</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>Se non esiste nessun documento con quel <code class="language-plaintext highlighter-rouge">username</code>, la strategia <strong>fallisce</strong>.</li>
+  <li><code class="language-plaintext highlighter-rouge">done(null, false, { message })</code> segnala a Passport che l’autenticazione è fallita.</li>
+</ul>
+
+<p>Verifica della password</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">match</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">bcrypt</span><span class="p">.</span><span class="nf">compare</span><span class="p">(</span><span class="nx">password</span><span class="p">,</span> <span class="nx">identity</span><span class="p">.</span><span class="nx">credentials</span><span class="p">.</span><span class="nx">hashedPassword</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>Usa <code class="language-plaintext highlighter-rouge">bcrypt.compare</code> per confrontare la password inviata con quella <strong>criptata</strong> nel database. Se la password è corretta:</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if </span><span class="p">(</span><span class="nx">match</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nf">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">identity</span><span class="p">.</span><span class="nf">toObject</span><span class="p">().</span><span class="nx">user</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>Se la password è giusta, si chiama <code class="language-plaintext highlighter-rouge">done</code> con l’oggetto <code class="language-plaintext highlighter-rouge">user</code> associato a quell’identità.</li>
+  <li>Questo oggetto sarà disponibile nel <code class="language-plaintext highlighter-rouge">req.user</code>.</li>
+</ul>
+
+<p>Se la password è sbagliata</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="p">{</span> <span class="na">message</span><span class="p">:</span> <span class="dl">"</span><span class="s2">invalid password</span><span class="dl">"</span> <span class="p">});</span>
+</code></pre></div></div>
+
+<h3 id="user-identityentityts"><code class="language-plaintext highlighter-rouge">user-identity.entity.ts</code></h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">User</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../../../api/user/user.entity</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kr">interface</span> <span class="nx">UserIdentity</span> <span class="p">{</span>
+  <span class="nl">id</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">provider</span><span class="p">:</span> <span class="dl">"</span><span class="s2">local</span><span class="dl">"</span><span class="p">;</span>
+  <span class="nl">credentials</span><span class="p">:</span> <span class="p">{</span>
+    <span class="na">username</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+    <span class="nl">hashedPassword</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="p">};</span>
+  <span class="nl">user</span><span class="p">:</span> <span class="nx">User</span><span class="p">;</span>
+
+  <span class="c1">// Token</span>
+  <span class="nl">isActive</span><span class="p">:</span> <span class="nx">boolean</span><span class="p">;</span>
+  <span class="nl">emailConfirmationSentAt</span><span class="p">?:</span> <span class="nb">Date</span><span class="p">;</span>
+  <span class="nl">confirmationToken</span><span class="p">?:</span> <span class="kr">string</span> <span class="o">|</span> <span class="kc">undefined</span><span class="p">;</span>
+  <span class="nl">resetPasswordToken</span><span class="p">?:</span> <span class="kr">string</span> <span class="o">|</span> <span class="kc">undefined</span> <span class="o">|</span> <span class="kc">null</span><span class="p">;</span>
+  <span class="nl">resetPasswordExpires</span><span class="p">?:</span> <span class="nb">Date</span> <span class="o">|</span> <span class="kr">string</span> <span class="o">|</span> <span class="kc">undefined</span> <span class="o">|</span> <span class="kc">null</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="user-identitymodelts"><code class="language-plaintext highlighter-rouge">user-identity.model.ts</code></h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">UserIdentity</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./user-identity.entity</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="nx">mongoose</span><span class="p">,</span> <span class="p">{</span> <span class="nx">Schema</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">mongoose</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="kd">const</span> <span class="nx">userIdentitySchema</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">mongoose</span><span class="p">.</span><span class="nx">Schema</span><span class="o">&lt;</span><span class="nx">UserIdentity</span><span class="o">&gt;</span><span class="p">({</span>
+  <span class="na">provider</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="dl">"</span><span class="s2">local</span><span class="dl">"</span> <span class="p">},</span>
+  <span class="na">credentials</span><span class="p">:</span> <span class="p">{</span>
+    <span class="na">type</span><span class="p">:</span> <span class="p">{</span>
+      <span class="na">username</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span>
+      <span class="na">hashedPassword</span><span class="p">:</span> <span class="nb">String</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="na">user</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nx">Schema</span><span class="p">.</span><span class="nx">Types</span><span class="p">.</span><span class="nx">ObjectId</span><span class="p">,</span> <span class="na">ref</span><span class="p">:</span> <span class="dl">"</span><span class="s2">User</span><span class="dl">"</span> <span class="p">},</span>
+
+  <span class="c1">// Token</span>
+  <span class="na">isActive</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Boolean</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">false</span> <span class="p">},</span>
+  <span class="na">emailConfirmationSentAt</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Date</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">},</span>
+  <span class="na">confirmationToken</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span> <span class="o">||</span> <span class="kc">undefined</span> <span class="o">||</span> <span class="kc">null</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">undefined</span> <span class="p">},</span>
+  <span class="na">resetPasswordToken</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span> <span class="o">||</span> <span class="kc">undefined</span> <span class="o">||</span> <span class="kc">null</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">undefined</span> <span class="p">},</span>
+  <span class="na">resetPasswordExpires</span><span class="p">:</span> <span class="p">{</span>
+    <span class="na">type</span><span class="p">:</span> <span class="nb">Date</span> <span class="o">||</span> <span class="nb">String</span> <span class="o">||</span> <span class="kc">undefined</span><span class="p">,</span>
+    <span class="na">default</span><span class="p">:</span> <span class="kc">undefined</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="nx">userIdentitySchema</span><span class="p">.</span><span class="nf">pre</span><span class="p">(</span><span class="dl">"</span><span class="s2">findOne</span><span class="dl">"</span><span class="p">,</span> <span class="nf">function </span><span class="p">(</span><span class="nx">next</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">this</span><span class="p">.</span><span class="nf">populate</span><span class="p">(</span><span class="dl">"</span><span class="s2">user</span><span class="dl">"</span><span class="p">);</span>
+  <span class="nf">next</span><span class="p">();</span>
+<span class="p">});</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">UserIdentityModel</span> <span class="o">=</span> <span class="nx">mongoose</span><span class="p">.</span><span class="nx">model</span><span class="o">&lt;</span><span class="nx">UserIdentity</span><span class="o">&gt;</span><span class="p">(</span><span class="dl">"</span><span class="s2">UserIdentity</span><span class="dl">"</span><span class="p">,</span> <span class="nx">userIdentitySchema</span><span class="p">);</span>
+</code></pre></div></div>
