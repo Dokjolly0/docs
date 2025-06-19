@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/index.md",
+                "file": "docs/node/03.utils_folder.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "index"
+              "title": "03.utils_folder"
             }
           }
         ]
@@ -166,12 +166,12 @@
   },
   "active": "d51ce27b6a5c8551",
   "lastOpenFiles": [
-    "node/02.error_handling.md",
-    "docs/index.md",
-    "docs/node/index.md",
-    "docs/node/01.creazione_progetto.md",
     "docs/node/02.errors_handling.md",
     "docs/node/03.utils_folder.md",
+    "docs/index.md",
+    "node/02.error_handling.md",
+    "docs/node/index.md",
+    "docs/node/01.creazione_progetto.md",
     "node",
     "02.error_handling.md",
     "02.error_handling.m.md",

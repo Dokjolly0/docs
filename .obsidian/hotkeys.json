@@ -1,0 +1,10 @@
+{
+  "toggle-dark-mode:toggle-dark-mode": [
+    {
+      "modifiers": [
+        "Mod"
+      ],
+      "key": "M"
+    }
+  ]
+}
