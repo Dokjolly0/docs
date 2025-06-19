@@ -41,8 +41,9 @@ npm <span class="nb">install</span> <span class="nt">--save-dev</span> @types/pa
 <span class="nb">touch </span>src/utils/auth/authenticated-middleware.ts
 </code></pre></div></div>
 
-<p>L’user lo creiamo più avanti, ma per ora per creare la <code class="language-plaintext highlighter-rouge">jwt strategy</code> ci serve l’interface e il model dello user, quindi copia questa interface in <code class="language-plaintext highlighter-rouge">src/api/user/user.interface.ts</code>
-<code class="language-plaintext highlighter-rouge">user.interface.ts</code></p>
+<p>L’user lo creiamo più avanti, ma per ora per creare la <code class="language-plaintext highlighter-rouge">jwt strategy</code> ci serve l’interface e il model dello user, quindi copia questa interface in <code class="language-plaintext highlighter-rouge">src/api/user/user.interface.ts</code> e questo model in <code class="language-plaintext highlighter-rouge">src/api/user/user.model.ts</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">user.interface.ts</code></p>
 <div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">export</span> <span class="kr">interface</span> <span class="nx">User</span> <span class="p">{</span>
   <span class="c1">// Unique ID</span>
   <span class="nl">id</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
@@ -53,7 +54,6 @@ npm <span class="nb">install</span> <span class="nt">--save-dev</span> @types/pa
   <span class="c1">// Authentication Info</span>
   <span class="nl">status</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
   <span class="nl">role</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
-  <span class="nl">isConfirmed</span><span class="p">?:</span> <span class="nx">boolean</span><span class="p">;</span>
   <span class="c1">// Security Info</span>
   <span class="nl">createdAt</span><span class="p">?:</span> <span class="nb">Date</span> <span class="o">|</span> <span class="kr">string</span><span class="p">;</span>
   <span class="nl">lastUpdateAt</span><span class="p">?:</span> <span class="nb">Date</span> <span class="o">|</span> <span class="kr">string</span> <span class="o">|</span> <span class="kc">undefined</span><span class="p">;</span>
@@ -75,7 +75,6 @@ npm <span class="nb">install</span> <span class="nt">--save-dev</span> @types/pa
 
   <span class="na">status</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="na">enum</span><span class="p">:</span> <span class="nx">USER_STATUS_ENUM</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">},</span>
   <span class="na">role</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="na">enum</span><span class="p">:</span> <span class="nx">USER_ROLE_ENUM</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="dl">"</span><span class="s2">user</span><span class="dl">"</span> <span class="p">},</span>
-  <span class="na">isConfirmed</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Boolean</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">false</span> <span class="p">},</span>
 
   <span class="na">createdAt</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Date</span> <span class="o">||</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">},</span>
   <span class="na">lastUpdateAt</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Date</span> <span class="o">||</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">},</span>
@@ -114,6 +113,8 @@ npm <span class="nb">install</span> <span class="nt">--save-dev</span> @types/pa
 
 </code></pre></div></div>
 
+<p>Nello user model ci servira definire gli enum disponibili per user role e user status, quindi imposta i valori in <code class="language-plaintext highlighter-rouge">src/utils/enums</code> e in <code class="language-plaintext highlighter-rouge">src/utils/types</code></p>
+
 <p><code class="language-plaintext highlighter-rouge">user.enum.ts</code></p>
 <div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">export</span> <span class="kd">const</span> <span class="nx">USER_ROLE_ENUM</span> <span class="o">=</span> <span class="p">[</span><span class="dl">"</span><span class="s2">admin</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">user</span><span class="dl">"</span><span class="p">]</span> <span class="kd">as const</span><span class="p">;</span>
 <span class="k">export</span> <span class="kd">const</span> <span class="nx">USER_STATUS_ENUM</span> <span class="o">=</span> <span class="p">[</span><span class="dl">"</span><span class="s2">active</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">inactive</span><span class="dl">"</span><span class="p">];</span>
@@ -125,6 +126,8 @@ npm <span class="nb">install</span> <span class="nt">--save-dev</span> @types/pa
 <span class="k">export</span> <span class="kd">type</span> <span class="nx">UserRole</span> <span class="o">=</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">USER_ROLE_ENUM</span><span class="p">)[</span><span class="kr">number</span><span class="p">];</span> <span class="c1">// "admin" | "user"</span>
 <span class="k">export</span> <span class="kd">type</span> <span class="nx">UserStatus</span> <span class="o">=</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">USER_STATUS_ENUM</span><span class="p">)[</span><span class="kr">number</span><span class="p">];</span> <span class="c1">// "active" | "inactive"</span>
 </code></pre></div></div>
+
+<p>Adesso che abbiamo preparato i file iniziali possiamo iniziare a scrivere i file di maggiore utilità che richiameremo in tutto il progetto</p>
 
 <h3 id="dotenvts"><code class="language-plaintext highlighter-rouge">dotenv.ts</code></h3>
 
@@ -331,7 +334,7 @@ Vediamo un esempio pratico</li>
 <span class="k">export</span> <span class="kd">type</span> <span class="nx">RequestWithParams</span><span class="o">&lt;</span><span class="nx">P</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nx">TypedRequest</span><span class="o">&lt;</span><span class="nx">unknown</span><span class="p">,</span> <span class="nx">unknown</span><span class="p">,</span> <span class="nx">P</span><span class="o">&gt;</span><span class="p">;</span>
 </code></pre></div></div>
 
-<p>Questa interface molto complicata a prima vista ti permette di tipizzare le richieste che fai di solito con express, ora vediamo qualche esempio. se ti serve solo un tipo allora usa i 3 tipi esportati in basso, se te ne servono 2 o piu usa <code class="language-plaintext highlighter-rouge">TypedRequest</code> tenendo conto che devi andare in ordine, ovvero <code class="language-plaintext highlighter-rouge">body</code>, <code class="language-plaintext highlighter-rouge">query</code> e poi <code class="language-plaintext highlighter-rouge">param</code>, se te ne servono solo 2 scrivi <code class="language-plaintext highlighter-rouge">unknown</code> sul campo mancante</p>
+<p>Questa interface molto complicata a prima vista ti permette di tipizzare le richieste che fai di solito con express, ora vediamo qualche esempio. Se ti serve solo un campo di richiesta (<code class="language-plaintext highlighter-rouge">body</code>, <code class="language-plaintext highlighter-rouge">query</code> o <code class="language-plaintext highlighter-rouge">param</code>) allora usa i 3 tipi esportati in basso, se te ne servono 2 o piu usa <code class="language-plaintext highlighter-rouge">TypedRequest</code> tenendo conto che devi andare in ordine, ovvero <code class="language-plaintext highlighter-rouge">body</code>, <code class="language-plaintext highlighter-rouge">query</code> e poi <code class="language-plaintext highlighter-rouge">param</code>, se te ne servono solo 2 scrivi <code class="language-plaintext highlighter-rouge">unknown</code> sul campo mancante</p>
 
 <p>Con <code class="language-plaintext highlighter-rouge">Request</code> standard:</p>
 <div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">Request</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express</span><span class="dl">"</span><span class="p">;</span>
@@ -481,8 +484,6 @@ Vediamo un esempio pratico</li>
   <span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></div>
-
-<p>Intanto partiamo dal capire a cosa servono questi import scritti così:</p>
 <h3 id="-cosa-fanno-questi-import">✅ <strong>Cosa fanno questi import?</strong></h3>
 
 <p>Questi <strong>non importano nulla “esplicitamente”</strong>, ma eseguono <strong>il file per i suoi effetti collaterali</strong> (side effects).
@@ -527,13 +528,12 @@ Vediamo un esempio pratico</li>
 <div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">router</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nx">isAuthenticated</span><span class="p">);</span>
 </code></pre></div></div>
 
-<p>oppure in una singola chiamata nel router</p>
+<p>Significa: <strong>“tutte le route che seguono richiedono un utente autenticato con un JWT valido.”</strong></p>
 
 <div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">router</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="dl">"</span><span class="s2">/me</span><span class="dl">"</span><span class="p">,</span> <span class="nx">isAuthenticated</span><span class="p">,</span> <span class="nx">me</span><span class="p">);</span>
 </code></pre></div></div>
 
-<p>Significa: <strong>“tutte le route che seguono richiedono un utente autenticato con un JWT valido.”</strong></p>
-
+<p>oppure in una singola chiamata nel router</p>
 <h2 id="-dettagli-dellopzione--session-false-">🔎 Dettagli dell’opzione <code class="language-plaintext highlighter-rouge">{ session: false }</code></h2>
 
 <ul>
@@ -582,8 +582,8 @@ Vediamo un esempio pratico</li>
 
 <ol>
   <li><strong>Configura</strong> Passport per usare i token JWT (JSON Web Token)</li>
-  <li>Estrae il token dalla richiesta (<code class="language-plaintext highlighter-rouge">Authorization: Bearer ...</code>)</li>
-  <li>Decodifica e verifica il token con una <strong>chiave segreta</strong></li>
+  <li>Estrae il token dalla richiesta (<code class="language-plaintext highlighter-rouge">Authorization: Bearer ...</code> -&gt; <code class="language-plaintext highlighter-rouge">ExtractJwt.fromAuthHeaderAsBearerToken()</code>)</li>
+  <li>Decodifica e verifica il token con una <strong>chiave segreta</strong> presente nel file <code class="language-plaintext highlighter-rouge">.env</code></li>
   <li>Se il token è valido, recupera l’utente dal database e lo attacca come <code class="language-plaintext highlighter-rouge">req.user</code></li>
   <li>Se non è valido o non trova l’utente → fallisce con errore <code class="language-plaintext highlighter-rouge">401 Unauthorized</code></li>
 </ol>
@@ -636,13 +636,13 @@ Vediamo un esempio pratico</li>
 </code></pre></div></div>
 
 <p>Questo file si occupa di fare l’autenticazione con <code class="language-plaintext highlighter-rouge">passport-local</code>, vediamo come viene creata la configurazione della strategia</p>
-<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">passport</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span>
-  <span class="k">new</span> <span class="nx">LocalStrategy</span><span class="p">(</span>
-    <span class="p">{</span>
-      <span class="na">usernameField</span><span class="p">:</span> <span class="dl">"</span><span class="s2">username</span><span class="dl">"</span><span class="p">,</span>
-      <span class="na">passwordField</span><span class="p">:</span> <span class="dl">"</span><span class="s2">password</span><span class="dl">"</span><span class="p">,</span>
-      <span class="na">session</span><span class="p">:</span> <span class="kc">false</span>
-    <span class="p">},</span>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">new</span> <span class="nx">LocalStrategy</span><span class="p">(</span>
+<span class="p">{</span>
+  <span class="na">usernameField</span><span class="p">:</span> <span class="dl">"</span><span class="s2">username</span><span class="dl">"</span><span class="p">,</span>
+  <span class="na">passwordField</span><span class="p">:</span> <span class="dl">"</span><span class="s2">password</span><span class="dl">"</span><span class="p">,</span>
+  <span class="na">session</span><span class="p">:</span> <span class="kc">false</span>
+<span class="p">},</span>
 </code></pre></div></div>
 
 <p>Stiamo dicendo a Passport:</p>
@@ -701,6 +701,8 @@ Vediamo un esempio pratico</li>
 
 <div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="p">{</span> <span class="na">message</span><span class="p">:</span> <span class="dl">"</span><span class="s2">invalid password</span><span class="dl">"</span> <span class="p">});</span>
 </code></pre></div></div>
+
+<p>Adesso i file <code class="language-plaintext highlighter-rouge">user-identity.entity.ts</code> e <code class="language-plaintext highlighter-rouge">user-identity.model.ts</code> servono per creare nel database una <code class="language-plaintext highlighter-rouge">collezione</code> che salverai a database che contiene l’username, la password (criptata) e il riferimento allo user, oltre a valori come <code class="language-plaintext highlighter-rouge">isActive</code> che serve per verificare se l’user ha verificato la mail e vari token utili per funzionalità che vedremo in futuro</p>
 
 <h3 id="user-identityentityts"><code class="language-plaintext highlighter-rouge">user-identity.entity.ts</code></h3>
 
