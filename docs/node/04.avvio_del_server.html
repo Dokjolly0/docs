@@ -1,0 +1,346 @@
+<link rel="stylesheet" href="/assets/css/custom.css" />
+
+<p>Pacchetti necessari per questa sezione, ricordati anche di controllare il file <code class="language-plaintext highlighter-rouge">.env</code> e controllare che ci siano tutti i valori <a href="node/00.file_env.md">qui</a></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm <span class="nb">install </span>reflect-metadata cors morgan
+npm <span class="nb">install</span> <span class="nt">--save-dev</span> nodemon eslint eslint-plugin-import @types/cors @types/morgan
+</code></pre></div></div>
+
+<p>Creazione delle routes in <code class="language-plaintext highlighter-rouge">routes.ts</code></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">touch</span> ./src/api/routes.ts
+</code></pre></div></div>
+
+<p>Adesso popoliamo il file <code class="language-plaintext highlighter-rouge">index.ts</code> e capiamone la logica</p>
+
+<h3 id="indexts"><code class="language-plaintext highlighter-rouge">index.ts</code></h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="dl">"</span><span class="s2">reflect-metadata</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="nx">mongoose</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">mongoose</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">import</span> <span class="nx">app</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./app</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">requireEnvVars</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./utils/dotenv</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="kd">const</span> <span class="p">[</span><span class="nx">MONGO_URI</span><span class="p">,</span> <span class="nx">DB_NAME</span><span class="p">,</span> <span class="nx">PORT</span><span class="p">,</span> <span class="nx">ENVIRONMENT</span><span class="p">]</span> <span class="o">=</span> <span class="nf">requireEnvVars</span><span class="p">([</span>
+  <span class="dl">"</span><span class="s2">MONGO_URI</span><span class="dl">"</span><span class="p">,</span>
+  <span class="dl">"</span><span class="s2">DB_NAME</span><span class="dl">"</span><span class="p">,</span>
+  <span class="dl">"</span><span class="s2">PORT</span><span class="dl">"</span><span class="p">,</span>
+  <span class="dl">"</span><span class="s2">ENVIRONMENT</span><span class="dl">"</span>
+<span class="p">]);</span>
+
+<span class="c1">// Attiva il debug solo in sviluppo</span>
+<span class="k">if </span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">ENVIRONMENT</span> <span class="o">!==</span> <span class="dl">"</span><span class="s2">production</span><span class="dl">"</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">mongoose</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="dl">"</span><span class="s2">debug</span><span class="dl">"</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">mongoose</span>
+  <span class="p">.</span><span class="nf">connect</span><span class="p">(</span><span class="s2">`</span><span class="p">${</span><span class="nx">MONGO_URI</span><span class="p">}</span><span class="s2">/</span><span class="p">${</span><span class="nx">DB_NAME</span><span class="p">}</span><span class="s2">`</span><span class="p">)</span>
+  <span class="p">.</span><span class="nf">then</span><span class="p">((</span><span class="nx">_</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="nx">app</span><span class="p">.</span><span class="nf">listen</span><span class="p">(</span><span class="nx">PORT</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="s2">`Server started on port </span><span class="p">${</span><span class="nx">PORT</span><span class="p">}</span><span class="s2">`</span><span class="p">);</span>
+    <span class="p">});</span>
+  <span class="p">})</span>
+  <span class="p">.</span><span class="k">catch</span><span class="p">((</span><span class="nx">err</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nf">error</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+  <span class="p">});</span>
+</code></pre></div></div>
+
+<p>L’importazione di <code class="language-plaintext highlighter-rouge">"reflect-metadata"</code> serve per <strong>abilitare la riflessione a runtime in TypeScript</strong>, ed è <strong>essenziale</strong> se utilizzi <strong>decoratori</strong>, come quelli usati con:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">class-validator</code></li>
+  <li><code class="language-plaintext highlighter-rouge">class-transformer</code></li>
+  <li><code class="language-plaintext highlighter-rouge">type-graphql</code></li>
+  <li><code class="language-plaintext highlighter-rouge">routing-controllers</code></li>
+  <li>e altre librerie che usano <strong>metadata reflection</strong></li>
+</ul>
+
+<h3 id="-cosè-la-riflessione">🧠 Cos’è la “riflessione”?</h3>
+
+<p>La <strong>riflessione</strong> permette di:</p>
+
+<ul>
+  <li>leggere <strong>metadati</strong> su classi, proprietà e metodi,</li>
+  <li>sapere il tipo di un parametro o una proprietà a <strong>runtime</strong>,</li>
+  <li>permettere alle librerie di fare introspezione e generare comportamento dinamico.</li>
+</ul>
+
+<h3 id="-perché-ti-serve-in-questo-progetto">🔧 Perché ti serve in questo progetto?</h3>
+
+<p>Nel tuo caso stai usando:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">class-validator</code> → per validare DTO con decoratori come <code class="language-plaintext highlighter-rouge">@IsEmail()</code>, <code class="language-plaintext highlighter-rouge">@IsNumber()</code>, ecc.</li>
+  <li><code class="language-plaintext highlighter-rouge">class-transformer</code> → per trasformare oggetti da <code class="language-plaintext highlighter-rouge">plain object</code> a classi</li>
+</ul>
+
+<p>Entrambe <strong>dipendono</strong> da <code class="language-plaintext highlighter-rouge">reflect-metadata</code> per sapere:</p>
+
+<ul>
+  <li>qual è il tipo di ogni proprietà (<code class="language-plaintext highlighter-rouge">number</code>, <code class="language-plaintext highlighter-rouge">string</code>, <code class="language-plaintext highlighter-rouge">Date</code>, ecc.)</li>
+  <li>cosa è stato decorato con cosa</li>
+</ul>
+
+<h4 id="-senza-reflect-metadata">❗ Senza <code class="language-plaintext highlighter-rouge">reflect-metadata</code>?</h4>
+
+<p>Se lo dimentichi:</p>
+
+<ul>
+  <li>i decoratori sembrano funzionare ma <strong>non validano niente</strong> (nessun errore anche se <code class="language-plaintext highlighter-rouge">@IsEmail()</code> fallisce)</li>
+  <li>alcuni errori silenziosi e comportamenti inaspettati</li>
+</ul>
+
+<h3 id="-in-sintesi">✅ In sintesi</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Serve per</strong></th>
+      <th><strong>Perché è importante</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Abilitare decoratori TypeScript</td>
+      <td>Decoratori lavorano con <code class="language-plaintext highlighter-rouge">class-validator</code>, ecc.</td>
+    </tr>
+    <tr>
+      <td>Leggere i tipi delle proprietà a runtime</td>
+      <td>class-transformer e altri si basano su metadati</td>
+    </tr>
+    <tr>
+      <td>Fondamentale per DTO, validazioni, riflessioni</td>
+      <td>Decoratori senza questo non funzionano</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="creazione-del-server-con-mongoose">Creazione del server con mongoose</h3>
+
+<p>Adesso che abbiamo capito l’importanza di <code class="language-plaintext highlighter-rouge">reflect-metadata</code> vediamo nel dettaglio come funziona la creazione del server con <code class="language-plaintext highlighter-rouge">mongoose</code></p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">mongoose</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="dl">"</span><span class="s2">debug</span><span class="dl">"</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>✅ <strong>Cosa fa</strong>:<br />
+Abilita il <strong>debug mode</strong> di Mongoose. Questo significa che tutte le query eseguite da Mongoose verranno stampate sulla console. È utile per capire cosa sta facendo il codice “dietro le quinte”, soprattutto durante lo sviluppo. Quindi se vuoi deployare l’app ricordati di settare <code class="language-plaintext highlighter-rouge">ENVIRONMENT</code> a production nel file <code class="language-plaintext highlighter-rouge">.env</code></p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">mongoose</span><span class="p">.</span><span class="nf">connect</span><span class="p">(</span><span class="s2">`</span><span class="p">${</span><span class="nx">MONGO_URI</span><span class="p">}</span><span class="s2">/</span><span class="p">${</span><span class="nx">DB_NAME</span><span class="p">}</span><span class="s2">`</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>✅ <strong>Cosa fa</strong>:<br />
+Tenta di connettersi a un database MongoDB.</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">MONGO_URI</code>: è una variabile che contiene l’URL base del server MongoDB (es. <code class="language-plaintext highlighter-rouge">mongodb://localhost:27017</code>)</li>
+  <li><code class="language-plaintext highlighter-rouge">DB_NAME</code>: è il nome del database (es. <code class="language-plaintext highlighter-rouge">myapp</code>)</li>
+  <li>Quindi <code class="language-plaintext highlighter-rouge">\${MONGO_URI}/${DB_NAME}</code> sarà qualcosa tipo<code class="language-plaintext highlighter-rouge">mongodb://localhost:27017/myapp</code></li>
+</ul>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">.</span><span class="nf">then</span><span class="p">((</span><span class="nx">_</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="nx">PORT</span><span class="p">;</span>
+    <span class="nx">app</span><span class="p">.</span><span class="nf">listen</span><span class="p">(</span><span class="nx">PORT</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="s2">`Server started on port </span><span class="p">${</span><span class="nx">PORT</span><span class="p">}</span><span class="s2">`</span><span class="p">);</span>
+    <span class="p">});</span>
+  <span class="p">})</span>
+</code></pre></div></div>
+
+<p>✅ <strong>Cosa fa</strong>:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">.then(...)</code> viene eseguito <strong>dopo che la connessione a MongoDB ha avuto successo</strong>.</li>
+  <li><code class="language-plaintext highlighter-rouge">app.listen(PORT, ...)</code>: Avvia il server Express e lo mette in ascolto sulla porta <code class="language-plaintext highlighter-rouge">PORT</code>.</li>
+  <li>Una volta avviato, stampa in console che il server è attivo.</li>
+</ul>
+
+<h4 id="-ma-perché-si-usa-_">❓ Ma perché si usa <code class="language-plaintext highlighter-rouge">_</code>?</h4>
+
+<ul>
+  <li>Si usa <code class="language-plaintext highlighter-rouge">_</code> <strong>per convenzione</strong> quando <strong>non si ha bisogno</strong> del valore.</li>
+  <li>È un modo per dire: <em>“So che c’è un valore, ma non mi interessa usarlo.”</em><br />
+  (Simile al “placeholder” <code class="language-plaintext highlighter-rouge">_</code> in altri linguaggi come Python o Elixir.)</li>
+</ul>
+
+<h4 id="-posso-rimuovere-_">❌ Posso rimuovere <code class="language-plaintext highlighter-rouge">_</code>?</h4>
+
+<p>Sì, se non usi il parametro, puoi anche ometterlo completamente:</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">.</span><span class="k">catch</span><span class="p">((</span><span class="nx">err</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nf">error</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+  <span class="p">});</span>
+</code></pre></div></div>
+
+<p>Se invece la connessione fallisce il programma entra nel <code class="language-plaintext highlighter-rouge">.catch(...)</code> che al momento stampa solo un messaggio di errore</p>
+
+<h3 id="appts"><code class="language-plaintext highlighter-rouge">app.ts</code></h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nx">express</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="nx">cors</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">cors</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="nx">morgan</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">morgan</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="nx">apiRouter</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./api/routes</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">errorHandlers</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./errors</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="dl">"</span><span class="s2">./utils/auth/auth-handlers</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="kd">const</span> <span class="nx">app</span> <span class="o">=</span> <span class="nf">express</span><span class="p">();</span>
+
+<span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nf">cors</span><span class="p">());</span>
+<span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nf">morgan</span><span class="p">(</span><span class="dl">"</span><span class="s2">tiny</span><span class="dl">"</span><span class="p">));</span>
+<span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nx">express</span><span class="p">.</span><span class="nf">json</span><span class="p">());</span> <span class="c1">// Prima di express 4.16 -&gt; app.use(bodyParser.json());</span>
+<span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="dl">"</span><span class="s2">/api</span><span class="dl">"</span><span class="p">,</span> <span class="nx">apiRouter</span><span class="p">);</span>
+<span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nx">errorHandlers</span><span class="p">);</span>
+
+<span class="k">export</span> <span class="k">default</span> <span class="nx">app</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>Adesso vediamo come funziona l’app:</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">app</span> <span class="o">=</span> <span class="nf">express</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>Qui crei l’app che poi verrà usata nel file index per creare il server</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nf">cors</span><span class="p">());</span>
+<span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nf">morgan</span><span class="p">(</span><span class="dl">"</span><span class="s2">tiny</span><span class="dl">"</span><span class="p">));</span>
+<span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nx">express</span><span class="p">.</span><span class="nf">json</span><span class="p">());</span> <span class="c1">// Prima di express 4.16 -&gt; app.use(bodyParser.json());</span>
+<span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="dl">"</span><span class="s2">/api</span><span class="dl">"</span><span class="p">,</span> <span class="nx">apiRouter</span><span class="p">);</span>
+<span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nx">errorHandlers</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h3 id="-appusecors">🔹 <code class="language-plaintext highlighter-rouge">app.use(cors());</code></h3>
+
+<p>✅ <strong>Cos’è:</strong><br />
+Abilita <strong>CORS</strong> (Cross-Origin Resource Sharing).</p>
+
+<p>✅ <strong>A cosa serve:</strong><br />
+Permette che il tuo server accetti <strong>richieste da domini diversi</strong> (es: se il frontend è su <code class="language-plaintext highlighter-rouge">http://localhost:3000</code> e il backend su <code class="language-plaintext highlighter-rouge">http://localhost:5000</code>).</p>
+
+<p>⚠️ <strong>Senza CORS</strong>, il browser bloccherebbe queste richieste per motivi di sicurezza.</p>
+
+<h4 id="️-settaggi-di-cors">🛠️ Settaggi di cors</h4>
+
+<p>✅ 1. <strong>Permettere solo un dominio specifico (es. frontend)</strong></p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nf">cors</span><span class="p">({</span>
+  <span class="na">origin</span><span class="p">:</span> <span class="dl">'</span><span class="s1">http://localhost:5000</span><span class="dl">'</span>
+<span class="p">}));</span>
+</code></pre></div></div>
+
+<p>✅ 2. <strong>Permettere più domini</strong></p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">allowedOrigins</span> <span class="o">=</span> <span class="p">[</span><span class="dl">'</span><span class="s1">http://localhost:3000</span><span class="dl">'</span><span class="p">,</span> <span class="dl">'</span><span class="s1">https://myapp.com</span><span class="dl">'</span><span class="p">];</span>
+
+<span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nf">cors</span><span class="p">({</span>
+  <span class="na">origin</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">origin</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if </span><span class="p">(</span><span class="o">!</span><span class="nx">origin</span> <span class="o">||</span> <span class="nx">allowedOrigins</span><span class="p">.</span><span class="nf">includes</span><span class="p">(</span><span class="nx">origin</span><span class="p">))</span> <span class="p">{</span>
+      <span class="nf">callback</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="nf">callback</span><span class="p">(</span><span class="k">new</span> <span class="nc">Error</span><span class="p">(</span><span class="dl">'</span><span class="s1">Not allowed by CORS</span><span class="dl">'</span><span class="p">));</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}));</span>
+</code></pre></div></div>
+
+<p>✅ 3. <strong>Permettere invio di cookie (credentials)</strong></p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nf">cors</span><span class="p">({</span>
+  <span class="na">origin</span><span class="p">:</span> <span class="dl">'</span><span class="s1">http://localhost:3000</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">credentials</span><span class="p">:</span> <span class="kc">true</span>
+<span class="p">}));</span>
+</code></pre></div></div>
+
+<p>✅ 4. <strong>Permettere solo alcuni metodi HTTP</strong></p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nf">cors</span><span class="p">({</span>
+  <span class="na">origin</span><span class="p">:</span> <span class="dl">'</span><span class="s1">http://localhost:3000</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">methods</span><span class="p">:</span> <span class="p">[</span><span class="dl">'</span><span class="s1">GET</span><span class="dl">'</span><span class="p">,</span> <span class="dl">'</span><span class="s1">POST</span><span class="dl">'</span><span class="p">]</span>
+<span class="p">}));</span>
+</code></pre></div></div>
+
+<p>✅ 5. <strong>Permettere solo alcune intestazioni</strong></p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nf">cors</span><span class="p">({</span>
+  <span class="na">origin</span><span class="p">:</span> <span class="dl">'</span><span class="s1">http://localhost:3000</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">allowedHeaders</span><span class="p">:</span> <span class="p">[</span><span class="dl">'</span><span class="s1">Content-Type</span><span class="dl">'</span><span class="p">,</span> <span class="dl">'</span><span class="s1">Authorization</span><span class="dl">'</span><span class="p">]</span>
+<span class="p">}));</span>
+</code></pre></div></div>
+
+<p>✅ 6. Permettere tutto (default)</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nf">cors</span><span class="p">());</span>
+</code></pre></div></div>
+<h3 id="-appusemorgantiny">🔹 <code class="language-plaintext highlighter-rouge">app.use(morgan("tiny"));</code></h3>
+
+<p>✅ <strong>Cos’è:</strong><br />
+Aggiunge il middleware <strong>Morgan</strong>, un <strong>logger HTTP</strong>.</p>
+
+<p>✅ <strong>A cosa serve:</strong><br />
+Registra nella console ogni richiesta HTTP al server, ad esempio:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /api/users 200 12ms
+</code></pre></div></div>
+
+<p>🛠️ <code class="language-plaintext highlighter-rouge">"tiny"</code> è il formato più minimal. Esistono anche <code class="language-plaintext highlighter-rouge">"combined"</code>, <code class="language-plaintext highlighter-rouge">"dev"</code>, <code class="language-plaintext highlighter-rouge">"short"</code>, ecc.</p>
+
+<h3 id="-appusebodyparserjson">🔹 <code class="language-plaintext highlighter-rouge">app.use(bodyParser.json());</code></h3>
+
+<p>✅ <strong>Cos’è:</strong><br />
+Permette di <strong>parsing del corpo delle richieste JSON</strong>.</p>
+
+<p>✅ <strong>A cosa serve:</strong><br />
+Traduce il JSON nel <code class="language-plaintext highlighter-rouge">req.body</code> delle richieste POST, PUT, ecc.<br />
+Ad esempio:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Alice"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>diventa</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">req</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">name</span>
+</code></pre></div></div>
+
+<p>🔍 <strong>Nota moderna:</strong> oggi puoi anche usare <code class="language-plaintext highlighter-rouge">express.json()</code> al posto di <code class="language-plaintext highlighter-rouge">bodyParser.json()</code> (è integrato in Express &gt;= 4.16):</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">app</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="nx">express</span><span class="p">.</span><span class="nf">json</span><span class="p">());</span>
+</code></pre></div></div>
+
+<h3 id="-appuseapi-apirouter">🔹 <code class="language-plaintext highlighter-rouge">app.use("/api", apiRouter);</code></h3>
+
+<p>✅ <strong>Cos’è:</strong><br />
+Usa un <strong>router</strong> separato per le rotte che iniziano con <code class="language-plaintext highlighter-rouge">/api</code>.</p>
+
+<p>✅ <strong>A cosa serve:</strong><br />
+Inoltra le richieste <code class="language-plaintext highlighter-rouge">/api/...</code> a un file/router definito separatamente, ad esempio:</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// apiRouter.ts</span>
+<span class="nx">router</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="dl">"</span><span class="s2">/users</span><span class="dl">"</span><span class="p">,</span> <span class="p">...)</span> <span class="c1">// corrisponde a /api/users</span>
+</code></pre></div></div>
+
+<p>🧱 Questo aiuta a <strong>organizzare meglio</strong> il codice, separando le route API dal resto dell’app.</p>
+
+<h3 id="-appuseerrorhandlers">🔹 <code class="language-plaintext highlighter-rouge">app.use(errorHandlers);</code></h3>
+
+<p>✅ <strong>Cos’è:</strong><br />
+Un middleware per la <strong>gestione centralizzata degli errori</strong>.</p>
+
+<p>✅ <strong>A cosa serve:</strong><br />
+Cattura e gestisce tutti gli errori non gestiti a monte, evitando che Express crashi.</p>
+
+<p>🔍 Vedi la sezione errori dove ne parlo <a href="./02.errors_handling">qui</a></p>
+
+<p>⚠️ Assicurati che <code class="language-plaintext highlighter-rouge">errorHandlers</code> sia <strong>l’ultimo <code class="language-plaintext highlighter-rouge">app.use()</code></strong> chiamato, così cattura gli errori provenienti da tutte le route precedenti.</p>
+
+<h3 id="routests">routes.ts`</h3>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nx">express</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="kd">const</span> <span class="nx">router</span> <span class="o">=</span> <span class="nx">express</span><span class="p">.</span><span class="nc">Router</span><span class="p">();</span>
+
+<span class="k">export</span> <span class="k">default</span> <span class="nx">router</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>Qui semplicemente ti salvi le rotte per le tue api, adesso facciamo un esempio di aggiunta di una rotta:</p>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">router</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span><span class="dl">"</span><span class="s2">users</span><span class="dl">"</span><span class="p">,</span> <span class="nx">userRouter</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Che, come detto prima porterà a /api/users</p>
