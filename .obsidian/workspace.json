@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/node/index.md",
+                "file": "docs/node/00.file_env.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "index"
+              "title": "00.file_env"
             }
           }
         ]
@@ -166,17 +166,23 @@
   },
   "active": "d51ce27b6a5c8551",
   "lastOpenFiles": [
-    "docs/node/00.file_env.md",
+    "docs/assets/css/custom.css",
+    "docs/assets/css/Nuovo Immagine bitmap.bmp",
+    "docs/assets/css",
+    "docs/assets/Nuova cartella",
+    "docs/assets",
+    "docs/Nuova cartella",
     "docs/node/index.md",
-    "docs/index.md",
+    "docs/node/00.file_env.md",
     "docs/node/03.utils_folder.md",
+    "docs/node/02.errors_handling.md",
+    "docs/node/01.creazione_progetto.md",
+    "docs/index.md",
     "node/file_env.md",
     "node",
-    "docs/node/02.errors_handling.md",
     "node/00.file_env.md",
     "docs/node/00.file_env",
     "node/02.error_handling.md",
-    "docs/node/01.creazione_progetto.md",
     "02.error_handling.md",
     "02.error_handling.m.md",
     "docs/_config.yml",
@@ -188,9 +194,6 @@
     "index.md",
     "node.md",
     "node 1.md",
-    "_config.yml",
-    "_config.yaml",
-    "Nuovo Microsoft Publisher Document.pub",
     "node/02. Inizio progetto - errors.md",
     "Benvenuto.md"
   ]
