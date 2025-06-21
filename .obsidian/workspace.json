@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/node/00.file_env.md",
+                "file": "docs/node/index.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "00.file_env"
+              "title": "index"
             }
           }
         ]
@@ -166,15 +166,15 @@
   },
   "active": "d51ce27b6a5c8551",
   "lastOpenFiles": [
-    "docs/node/03.utils_folder.md",
     "docs/node/00.file_env.md",
+    "docs/node/index.md",
+    "docs/index.md",
+    "docs/node/03.utils_folder.md",
     "node/file_env.md",
     "node",
-    "docs/node/index.md",
     "docs/node/02.errors_handling.md",
     "node/00.file_env.md",
     "docs/node/00.file_env",
-    "docs/index.md",
     "node/02.error_handling.md",
     "docs/node/01.creazione_progetto.md",
     "02.error_handling.md",
