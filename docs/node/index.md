@@ -2,10 +2,13 @@
 layout: default
 title: Appunti Node.js
 ---
+<link rel="stylesheet" href="/assets/css/custom.css">
 
 # Appunti Node.js
 
-- [File env](00.file_env.md)
-- [Creazione progetto](01.creazione_progetto.md)
-- [Creazione errori](02.errors_handling.md)
-- [Creazione utils](03.utils_folder.md)
+- [File env](00.file_env)
+- [Creazione progetto](01.creazione_progetto)
+- [Creazione errori](02.errors_handling)
+- [Creazione utils](03.utils_folder)
+
+[Torna all'indice degli appunti generali](../index)
