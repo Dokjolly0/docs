@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/index.md",
+                "file": "docs/node/04.avvio_del_server.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "index"
+              "title": "04.avvio_del_server"
             }
           }
         ]
@@ -166,11 +166,12 @@
   },
   "active": "d51ce27b6a5c8551",
   "lastOpenFiles": [
-    "docs/node/index.md",
-    "docs/node/03.utils_folder.md",
     "docs/node/02.errors_handling.md",
-    "docs/node/01.creazione_progetto.md",
+    "docs/node/04.avvio_del_server.md",
+    "docs/node/index.md",
     "docs/node/00.file_env.md",
+    "docs/node/01.creazione_progetto.md",
+    "docs/node/03.utils_folder.md",
     "docs/index.md",
     "docs/assets/css/custom.css",
     "docs/assets/css/Nuovo Immagine bitmap.bmp",
