@@ -3,26 +3,28 @@
 npm <span class="nb">install</span> <span class="nt">--save-dev</span> @types/passport @types/passport-jwt @types/passport-local @types/bcrypt
 </code></pre></div></div>
 
-<p>Questa sezione è dedicata per i file che verranno richiamati da tutti i file del progetto, quindi prima creiamo la cartella <code class="language-plaintext highlighter-rouge">utils</code> e i vari file</p>
+<p>Questa sezione è dedicata per i file che verranno richiamati da tutti i file del progetto, quindi prima creiamo la cartella <code class="language-plaintext highlighter-rouge">utils</code> e i vari file e aggiorniamo il file <code class="language-plaintext highlighter-rouge">.env</code> <a href="node/00.file_env.md">file .env</a></p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">mkdir </span>src/utils/enums
-<span class="nb">mkdir </span>src/utils/types
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Create folders</span>
 <span class="nb">mkdir </span>src/utils/auth/jwt
-<span class="nb">mkdir </span>src/utils/auth/local
 <span class="nb">mkdir </span>src/utils/auth/providers
+<span class="nb">mkdir </span>src/utils/auth/providers/local
+<span class="nb">mkdir </span>src/utils/auth/providers/google
+<span class="nb">mkdir </span>src/utils/auth/providers/github
 <span class="nb">mkdir </span>src/utils/auth/user-identity
-
-<span class="c"># GitKeep</span>
-<span class="nb">touch </span>src/utils/auth/providers/.gitkeep
+<span class="nb">mkdir </span>src/utils/consts/types
+<span class="nb">mkdir </span>src/utils/consts/enums
 
 <span class="c"># Enum e type user</span>
-<span class="nb">touch </span>src/utils/enums/user.enum.ts
-<span class="nb">touch </span>src/utils/types/user.type.ts
+<span class="nb">touch </span>src/utils/consts/enums/user.enum.ts
+<span class="nb">touch </span>src/utils/consts/types/user.type.ts
 
 <span class="c"># Creato per definire la stategia jwt</span>
 <span class="nb">mkdir </span>src/api/user
 <span class="nb">touch </span>src/api/user/user.entity.ts
+<span class="nb">touch </span>src/api/user/user.model.ts
 
+<span class="c"># Utils files</span>
 <span class="nb">touch </span>src/utils/greater-than.validator.ts
 <span class="nb">touch </span>src/utils/is-populated-obj.ts
 <span class="nb">touch </span>src/utils/typed-request.ts
@@ -30,13 +32,17 @@ npm <span class="nb">install</span> <span class="nt">--save-dev</span> @types/pa
 <span class="nb">touch </span>src/utils/dotenv.ts
 <span class="nb">touch </span>src/utils/email.template.ts
 
+<span class="c"># Strategy</span>
 <span class="nb">touch </span>src/utils/auth/jwt/jwt-strategy.ts
+<span class="nb">touch </span>src/utils/auth/providers/local/local-strategy.ts
+<span class="nb">touch </span>src/utils/auth/providers/google/google-strategy.ts
+<span class="nb">touch </span>src/utils/auth/providers/github/github-strategy.ts
 
-<span class="nb">touch </span>src/utils/auth/local/local-strategy.ts
-
+<span class="c"># Identity model</span>
 <span class="nb">touch </span>src/utils/auth/user-identity/user-identity.entity.ts
 <span class="nb">touch </span>src/utils/auth/user-identity/user-identity.model.ts
 
+<span class="c"># Auth</span>
 <span class="nb">touch </span>src/utils/auth/auth-handlers.ts
 <span class="nb">touch </span>src/utils/auth/authenticated-middleware.ts
 </code></pre></div></div>
@@ -44,7 +50,9 @@ npm <span class="nb">install</span> <span class="nt">--save-dev</span> @types/pa
 <p>L’user lo creiamo più avanti, ma per ora per creare la <code class="language-plaintext highlighter-rouge">jwt strategy</code> ci serve l’interface e il model dello user, quindi copia questa interface in <code class="language-plaintext highlighter-rouge">src/api/user/user.interface.ts</code> e questo model in <code class="language-plaintext highlighter-rouge">src/api/user/user.model.ts</code></p>
 
 <p><code class="language-plaintext highlighter-rouge">user.interface.ts</code></p>
-<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">export</span> <span class="kr">interface</span> <span class="nx">User</span> <span class="p">{</span>
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">UserStatus</span><span class="p">,</span> <span class="nx">UserRole</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../../utils/consts/types/user.type</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kr">interface</span> <span class="nx">User</span> <span class="p">{</span>
   <span class="c1">// Unique ID</span>
   <span class="nl">id</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
   <span class="c1">// Base Info</span>
@@ -52,8 +60,8 @@ npm <span class="nb">install</span> <span class="nt">--save-dev</span> @types/pa
   <span class="nl">lastName</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
   <span class="nl">picture</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
   <span class="c1">// Authentication Info</span>
-  <span class="nl">status</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
-  <span class="nl">role</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">status</span><span class="p">?:</span> <span class="nx">UserStatus</span><span class="p">;</span>
+  <span class="nl">role</span><span class="p">?:</span> <span class="nx">UserRole</span><span class="p">;</span>
   <span class="c1">// Security Info</span>
   <span class="nl">createdAt</span><span class="p">?:</span> <span class="nb">Date</span> <span class="o">|</span> <span class="kr">string</span><span class="p">;</span>
   <span class="nl">lastUpdateAt</span><span class="p">?:</span> <span class="nb">Date</span> <span class="o">|</span> <span class="kr">string</span> <span class="o">|</span> <span class="kc">undefined</span><span class="p">;</span>
@@ -66,21 +74,21 @@ npm <span class="nb">install</span> <span class="nt">--save-dev</span> @types/pa
 <p><code class="language-plaintext highlighter-rouge">user.model.ts</code></p>
 <div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nx">mongoose</span><span class="p">,</span> <span class="p">{</span> <span class="nx">Document</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">mongoose</span><span class="dl">"</span><span class="p">;</span>
 <span class="k">import</span> <span class="p">{</span> <span class="nx">User</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">./user.entity</span><span class="dl">"</span><span class="p">;</span>
-<span class="k">import</span> <span class="p">{</span> <span class="nx">USER_ROLE_ENUM</span><span class="p">,</span> <span class="nx">USER_STATUS_ENUM</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../../utils/enums/user.enum</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">USER_ROLE_ENUM</span><span class="p">,</span> <span class="nx">USER_STATUS_ENUM</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../../utils/consts/enums/user.enum</span><span class="dl">"</span><span class="p">;</span>
 
 <span class="k">export</span> <span class="kd">const</span> <span class="nx">userSchema</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">mongoose</span><span class="p">.</span><span class="nx">Schema</span><span class="o">&lt;</span><span class="nx">User</span><span class="o">&gt;</span><span class="p">({</span>
   <span class="na">firstName</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span> <span class="p">},</span>
   <span class="na">lastName</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span> <span class="p">},</span>
   <span class="na">picture</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="dl">""</span> <span class="p">},</span>
 
-  <span class="na">status</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="na">enum</span><span class="p">:</span> <span class="nx">USER_STATUS_ENUM</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">},</span>
+  <span class="na">status</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="na">enum</span><span class="p">:</span> <span class="nx">USER_STATUS_ENUM</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">undefined</span> <span class="p">},</span>
   <span class="na">role</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="na">enum</span><span class="p">:</span> <span class="nx">USER_ROLE_ENUM</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="dl">"</span><span class="s2">user</span><span class="dl">"</span> <span class="p">},</span>
 
-  <span class="na">createdAt</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Date</span> <span class="o">||</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">},</span>
-  <span class="na">lastUpdateAt</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Date</span> <span class="o">||</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">},</span>
-  <span class="na">lastLogin</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Date</span> <span class="o">||</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">},</span>
-  <span class="na">lastAllowedIp</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">},</span>
-  <span class="na">allowedIps</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="p">[</span><span class="nb">String</span><span class="p">],</span> <span class="na">default</span><span class="p">:</span> <span class="kc">null</span> <span class="p">}</span>
+  <span class="na">createdAt</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Date</span> <span class="o">||</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">undefined</span> <span class="p">},</span>
+  <span class="na">lastUpdateAt</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Date</span> <span class="o">||</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">undefined</span> <span class="p">},</span>
+  <span class="na">lastLogin</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">Date</span> <span class="o">||</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">undefined</span> <span class="p">},</span>
+  <span class="na">lastAllowedIp</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="na">default</span><span class="p">:</span> <span class="kc">undefined</span> <span class="p">},</span>
+  <span class="na">allowedIps</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="p">[</span><span class="nb">String</span><span class="p">],</span> <span class="na">default</span><span class="p">:</span> <span class="kc">undefined</span> <span class="p">}</span>
 <span class="p">});</span>
 
 <span class="nx">userSchema</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="dl">"</span><span class="s2">toJSON</span><span class="dl">"</span><span class="p">,</span> <span class="p">{</span>
@@ -88,10 +96,6 @@ npm <span class="nb">install</span> <span class="nt">--save-dev</span> @types/pa
   <span class="na">transform</span><span class="p">:</span> <span class="p">(</span><span class="na">_</span><span class="p">:</span> <span class="nx">Document</span><span class="p">,</span> <span class="na">ret</span><span class="p">:</span> <span class="nb">Record</span><span class="o">&lt;</span><span class="kr">string</span><span class="p">,</span> <span class="kr">any</span><span class="o">&gt;</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
     <span class="k">delete</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">_id</span><span class="p">;</span>
     <span class="k">delete</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">__v</span><span class="p">;</span>
-    <span class="k">delete</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">isConfirmed</span><span class="p">;</span>
-    <span class="k">if </span><span class="p">(</span><span class="nx">ret</span><span class="p">.</span><span class="nx">role</span> <span class="o">===</span> <span class="dl">"</span><span class="s2">user</span><span class="dl">"</span><span class="p">)</span> <span class="p">{</span>
-      <span class="k">delete</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">storeIds</span><span class="p">;</span>
-    <span class="p">}</span>
     <span class="k">return</span> <span class="nx">ret</span><span class="p">;</span>
   <span class="p">}</span>
 <span class="p">});</span>
@@ -101,16 +105,11 @@ npm <span class="nb">install</span> <span class="nt">--save-dev</span> @types/pa
   <span class="na">transform</span><span class="p">:</span> <span class="p">(</span><span class="na">_</span><span class="p">:</span> <span class="nx">Document</span><span class="p">,</span> <span class="na">ret</span><span class="p">:</span> <span class="nb">Record</span><span class="o">&lt;</span><span class="kr">string</span><span class="p">,</span> <span class="kr">any</span><span class="o">&gt;</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
     <span class="k">delete</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">_id</span><span class="p">;</span>
     <span class="k">delete</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">__v</span><span class="p">;</span>
-    <span class="c1">// delete ret.isConfirmed;</span>
-    <span class="k">if </span><span class="p">(</span><span class="nx">ret</span><span class="p">.</span><span class="nx">role</span> <span class="o">===</span> <span class="dl">"</span><span class="s2">user</span><span class="dl">"</span><span class="p">)</span> <span class="p">{</span>
-      <span class="k">delete</span> <span class="nx">ret</span><span class="p">.</span><span class="nx">storeIds</span><span class="p">;</span>
-    <span class="p">}</span>
     <span class="k">return</span> <span class="nx">ret</span><span class="p">;</span>
   <span class="p">}</span>
 <span class="p">});</span>
 
 <span class="k">export</span> <span class="kd">const</span> <span class="nx">UserModel</span> <span class="o">=</span> <span class="nx">mongoose</span><span class="p">.</span><span class="nx">model</span><span class="o">&lt;</span><span class="nx">User</span><span class="o">&gt;</span><span class="p">(</span><span class="dl">"</span><span class="s2">User</span><span class="dl">"</span><span class="p">,</span> <span class="nx">userSchema</span><span class="p">);</span>
-
 </code></pre></div></div>
 
 <p>Nello user model ci servira definire gli enum disponibili per user role e user status, quindi imposta i valori in <code class="language-plaintext highlighter-rouge">src/utils/enums</code> e in <code class="language-plaintext highlighter-rouge">src/utils/types</code></p>
@@ -472,9 +471,9 @@ Vediamo un esempio pratico</li>
 <h3 id="auth-handlersts"><code class="language-plaintext highlighter-rouge">auth-handlers.ts</code></h3>
 
 <div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="dl">"</span><span class="s2">./jwt/jwt-strategy</span><span class="dl">"</span><span class="p">;</span>
-<span class="k">import</span> <span class="dl">"</span><span class="s2">./jwt/github-strategy</span><span class="dl">"</span><span class="p">;</span>
-<span class="k">import</span> <span class="dl">"</span><span class="s2">./jwt/google-strategy</span><span class="dl">"</span><span class="p">;</span>
-<span class="k">import</span> <span class="dl">"</span><span class="s2">./local/local-strategy</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="dl">"</span><span class="s2">./providers/local/local-strategy</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="dl">"</span><span class="s2">./providers/google/google-strategy</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="dl">"</span><span class="s2">./providers/github/github-strategy</span><span class="dl">"</span><span class="p">;</span>
 
 <span class="k">import</span> <span class="p">{</span> <span class="nx">User</span> <span class="kd">as </span><span class="nx">myUser</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../../api/user/user.entity</span><span class="dl">"</span><span class="p">;</span>
 
@@ -487,7 +486,8 @@ Vediamo un esempio pratico</li>
 <h3 id="-cosa-fanno-questi-import">✅ <strong>Cosa fanno questi import?</strong></h3>
 
 <p>Questi <strong>non importano nulla “esplicitamente”</strong>, ma eseguono <strong>il file per i suoi effetti collaterali</strong> (side effects).
-👉 È un pattern usato per “attivare” qualcosa al caricamento del modulo.</p>
+👉 È un pattern usato per “attivare” qualcosa al caricamento del modulo.
+Ho già predisposto anche gli import per i providers di google e github ma al momento sono solo file vuoti</p>
 
 <h3 id="-in-pratica-questi-file-vengono-eseguiti-per-fare-una-cosa-come">🧠 <strong>In pratica, questi file vengono eseguiti per fare una cosa come:</strong></h3>
 
@@ -593,7 +593,7 @@ Vediamo un esempio pratico</li>
 <div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nx">passport</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">passport</span><span class="dl">"</span><span class="p">;</span>
 <span class="k">import</span> <span class="p">{</span> <span class="nx">Strategy</span> <span class="kd">as </span><span class="nx">LocalStrategy</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">passport-local</span><span class="dl">"</span><span class="p">;</span>
 <span class="k">import</span> <span class="o">*</span> <span class="kd">as </span><span class="nx">bcrypt</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">bcrypt</span><span class="dl">"</span><span class="p">;</span>
-<span class="k">import</span> <span class="p">{</span> <span class="nx">UserIdentityModel</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../user-identity/user-identity.model</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">UserIdentityModel</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../../user-identity/user-identity.model</span><span class="dl">"</span><span class="p">;</span>
 
 <span class="nx">passport</span><span class="p">.</span><span class="nf">use</span><span class="p">(</span>
   <span class="k">new</span> <span class="nc">LocalStrategy</span><span class="p">(</span>
@@ -703,6 +703,211 @@ Vediamo un esempio pratico</li>
 </code></pre></div></div>
 
 <p>Adesso i file <code class="language-plaintext highlighter-rouge">user-identity.entity.ts</code> e <code class="language-plaintext highlighter-rouge">user-identity.model.ts</code> servono per creare nel database una <code class="language-plaintext highlighter-rouge">collezione</code> che salverai a database che contiene l’username, la password (criptata) e il riferimento allo user, oltre a valori come <code class="language-plaintext highlighter-rouge">isActive</code> che serve per verificare se l’user ha verificato la mail e vari token utili per funzionalità che vedremo in futuro</p>
+
+<h3 id="altre-implementazioni-consigliate---rate-limiter">Altre implementazioni consigliate - <code class="language-plaintext highlighter-rouge">Rate limiter</code></h3>
+
+<h4 id="️-cosè-un-rate-limiter">🛡️ Cos’è un Rate Limiter?</h4>
+
+<p>Un <strong>Rate Limiter</strong> è un middleware che serve a <strong>limitare il numero di richieste</strong> che un client può fare a un endpoint <strong>in un certo intervallo di tempo</strong>.</p>
+
+<h3 id="️-serve-a">✳️ Serve a:</h3>
+
+<ul>
+  <li>Bloccare <strong>attacchi brute force</strong> (es. login ripetuto con password diverse)</li>
+  <li>Evitare <strong>abusi</strong> dell’API (es. chiamate spam)</li>
+  <li>Proteggere l’infrastruttura da <strong>sovraccarichi</strong> (es. DoS)</li>
+  <li>Mantenere l’<strong>equità d’uso</strong> delle API (fair usage)</li>
+</ul>
+
+<h3 id="-come-si-usa-express-rate-limit">🚀 Come si usa <code class="language-plaintext highlighter-rouge">express-rate-limit</code></h3>
+
+<h4 id="1-installazione">1. <strong>Installazione</strong></h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm <span class="nb">install </span>express-rate-limit
+</code></pre></div></div>
+
+<h4 id="2-import-e-configurazione-base">2. <strong>Import e configurazione base</strong></h4>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// src/middlewares/rate-limiter.ts</span>
+<span class="k">import</span> <span class="nx">rateLimit</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express-rate-limit</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="k">export</span> <span class="kd">const</span> <span class="nx">loginRateLimiter</span> <span class="o">=</span> <span class="nf">rateLimit</span><span class="p">({</span>
+  <span class="na">windowMs</span><span class="p">:</span> <span class="mi">15</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span> <span class="c1">// 15 minuti</span>
+  <span class="na">max</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="c1">// massimo 10 richieste per IP</span>
+  <span class="na">standardHeaders</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span> <span class="c1">// include header RateLimit-* nelle risposte</span>
+  <span class="na">legacyHeaders</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>  <span class="c1">// disattiva X-RateLimit-* obsoleti</span>
+  <span class="na">message</span><span class="p">:</span> <span class="p">{</span>
+    <span class="na">error</span><span class="p">:</span> <span class="dl">"</span><span class="s2">TooManyRequests</span><span class="dl">"</span><span class="p">,</span>
+    <span class="na">message</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Troppi tentativi di login. Riprova tra 15 minuti.</span><span class="dl">"</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<h4 id="25-possibili-domande">2.5 Possibili domande</h4>
+
+<h6 id="-windowms-15--60--1000">❓ <code class="language-plaintext highlighter-rouge">windowMs: 15 * 60 * 1000</code></h6>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">windowMs</span><span class="p">:</span> <span class="mi">15</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">1000</span> <span class="c1">// 15 minuti in millisecondi</span>
+</code></pre></div></div>
+
+<h4 id="-cosa-fa">✅ COSA FA:</h4>
+
+<p>Definisce <strong>l’intervallo di tempo (finestra)</strong> durante il quale viene conteggiato il numero massimo di richieste (<code class="language-plaintext highlighter-rouge">max</code>) <strong>per ogni client</strong>.</p>
+
+<h4 id="-come-funziona">🔍 COME FUNZIONA:</h4>
+
+<ul>
+  <li>La <strong>finestra parte dalla prima richiesta</strong> fatta da un determinato client (es. IP) e <strong>dura 15 minuti</strong>.</li>
+  <li>Durante quella finestra, se fai più di <code class="language-plaintext highlighter-rouge">max</code> richieste, vieni bloccato con errore <code class="language-plaintext highlighter-rouge">429 Too Many Requests</code>.</li>
+</ul>
+
+<p>✅ <strong>Non importa se la richiesta ha successo o fallisce</strong>: ogni chiamata valida HTTP <strong>conta nel limite</strong>.</p>
+
+<h4 id="-esempio">📌 Esempio:</h4>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">windowMs</span><span class="p">:</span> <span class="mi">15</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">1000</span> <span class="c1">// 15 min</span>
+<span class="nx">max</span><span class="p">:</span> <span class="mi">10</span>
+</code></pre></div></div>
+
+<ul>
+  <li>Utente fa 10 chiamate in 5 minuti → tutto OK.</li>
+  <li>Fa l’11esima entro i 15 minuti → viene bloccato.</li>
+  <li>Dopo i 15 minuti dalla <strong>prima richiesta</strong>, il conteggio si <strong>resetta automaticamente</strong>.</li>
+</ul>
+
+<p>📌 Questo <strong>timer è individuale per ogni client</strong>, <strong>non parte quando avvii il server</strong>, ma <strong>parte dalla prima richiesta dell’utente/IP</strong>.</p>
+
+<h6 id="-standardheaders-true">❓ <code class="language-plaintext highlighter-rouge">standardHeaders: true</code></h6>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">standardHeaders</span><span class="p">:</span> <span class="kc">true</span>
+</code></pre></div></div>
+
+<p>Questa opzione <strong>abilita gli header ufficiali</strong> definiti dalla RFC 6585 per il <strong>rate limiting</strong>.</p>
+
+<h4 id="-esempio-di-intestazioni-incluse-nella-risposta">✅ Esempio di intestazioni incluse nella risposta:</h4>
+
+<pre><code class="language-header">RateLimit-Limit: 10
+RateLimit-Remaining: 4
+RateLimit-Reset: 1622392800
+</code></pre>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">RateLimit-Limit</code>: numero massimo di richieste consentite</li>
+  <li><code class="language-plaintext highlighter-rouge">RateLimit-Remaining</code>: quante richieste ti restano</li>
+  <li><code class="language-plaintext highlighter-rouge">RateLimit-Reset</code>: timestamp UNIX in cui il limite verrà resettato</li>
+</ul>
+
+<p>✅ Molto utile per client (es. frontend) per <strong>sapere quanto manca</strong> prima del reset.</p>
+
+<h4 id="-headers-ricevuti-nella-risposta">📦 Headers ricevuti nella risposta:</h4>
+
+<pre><code class="language-header">HTTP/1.1 200 OK 
+RateLimit-Limit: 5 
+RateLimit-Remaining: 4 
+RateLimit-Reset: 1718980500 
+Content-Type: application/json
+</code></pre>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">RateLimit-Limit: 5</code> → max 5 richieste</li>
+  <li><code class="language-plaintext highlighter-rouge">RateLimit-Remaining: 4</code> → ne hai ancora 4 disponibili</li>
+  <li><code class="language-plaintext highlighter-rouge">RateLimit-Reset: &lt;timestamp&gt;</code> → UNIX timestamp in cui la finestra si resetta</li>
+</ul>
+
+<h6 id="-legacyheaders-false">❓ <code class="language-plaintext highlighter-rouge">legacyHeaders: false</code></h6>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">legacyHeaders</span><span class="p">:</span> <span class="kc">false</span>
+</code></pre></div></div>
+
+<p>Disattiva gli <strong>header non ufficiali</strong>, usati storicamente da molti servizi prima della RFC. Questi includono:</p>
+
+<pre><code class="language-header">X-RateLimit-Limit
+X-RateLimit-Remaining
+X-RateLimit-Reset
+</code></pre>
+
+<p>Questi sono <strong>ancora supportati da molti tool/servizi</strong>, ma sono considerati <strong>obsoleti</strong>.</p>
+
+<p>✅ Impostando <code class="language-plaintext highlighter-rouge">legacyHeaders: false</code>:</p>
+
+<ul>
+  <li>Non vengono più inviati.</li>
+  <li>Ti limiti ai soli header standard (<code class="language-plaintext highlighter-rouge">RateLimit-*</code>), che sono più compatibili con nuovi client e servizi.</li>
+</ul>
+
+<h4 id="3-applicazione-nel-router">3. <strong>Applicazione nel router</strong></h4>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="nx">express</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">express</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">loginRateLimiter</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../middleware/rate-limiter</span><span class="dl">"</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">loginController</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">../controllers/auth.controller</span><span class="dl">"</span><span class="p">;</span>
+
+<span class="kd">const</span> <span class="nx">router</span> <span class="o">=</span> <span class="nx">express</span><span class="p">.</span><span class="nc">Router</span><span class="p">();</span>
+
+<span class="nx">router</span><span class="p">.</span><span class="nf">post</span><span class="p">(</span><span class="dl">"</span><span class="s2">/login</span><span class="dl">"</span><span class="p">,</span> <span class="nx">loginRateLimiter</span><span class="p">,</span> <span class="nx">loginController</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>✅ <strong>Risultato</strong>: un utente può tentare il login solo 10 volte in 15 minuti da uno stesso IP. Se supera questo limite, riceverà un errore 429:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"error"</span><span class="p">:</span><span class="w"> </span><span class="s2">"TooManyRequests"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Troppi tentativi di login. Riprova tra 15 minuti."</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h2 id="-altre-configurazioni-utili">🔄 Altre configurazioni utili</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Opzione</th>
+      <th>Significato</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">windowMs</code></td>
+      <td>Finestra temporale per contare le richieste (es. 15 minuti)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">max</code></td>
+      <td>Numero massimo di richieste per finestra</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">message</code></td>
+      <td>Messaggio di errore in caso di superamento limite</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">keyGenerator</code></td>
+      <td>Funzione per determinare l’identificatore (default: IP)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">skip</code></td>
+      <td>Funzione per saltare il rate limit in certi casi</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">handler</code></td>
+      <td>Funzione personalizzata quando si supera il limite</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="-altri-usi-tipici">📦 Altri usi tipici</h2>
+
+<ul>
+  <li><strong>/login</strong> → 10 richieste in 15 min</li>
+  <li><strong>/forgot-password</strong> → 3 richieste in 1 ora</li>
+  <li><strong>/register</strong> → 5 richieste in 1 ora</li>
+  <li><strong>API pubbliche</strong> → es. 100 richieste/ora</li>
+</ul>
+
+<h2 id="-best-practices">🔐 Best practices</h2>
+
+<ul>
+  <li>Usa <strong>rate limiting</strong> solo su rotte “sensibili” (auth, email, ecc.)</li>
+  <li>Non usare su rotte con traffico lecito ad alta frequenza (es. <code class="language-plaintext highlighter-rouge">/products</code>)</li>
+  <li>Logga i tentativi bloccati se vuoi monitorarli</li>
+  <li>Combina con altre protezioni (es. CAPTCHA, ban IP, ecc.)</li>
+</ul>
 
 <h3 id="user-identityentityts"><code class="language-plaintext highlighter-rouge">user-identity.entity.ts</code></h3>
 
